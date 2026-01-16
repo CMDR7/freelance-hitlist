@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Freelancer Hit List Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --bg-main: #05060a;
+      --bg-panel: #101321;
+      --bg-panel-alt: #131629;
+      --accent: #ff3366;
+      --accent-soft: rgba(255, 51, 102, 0.35);
+      --accent-secondary: #33ffd9;
+      --text-main: #f5f5f7;
+      --text-muted: #8b8fa3;
+      --border-subtle: #262a3c;
+      --status-open: #33ffd9;
+      --status-onboarding: #ffd633;
+      --status-portal: #5b8dff;
+      --shadow-soft: 0 0 24px rgba(0, 0, 0, 0.6);
+      --glow-accent: 0 0 12px rgba(255, 51, 102, 0.7);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Rajdhani', sans-serif;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    .dashboard { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .title-group h1 {
+      font-size: 2rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--accent);
+      text-shadow: var(--glow-accent);
+    }
+
+    .header-actions { display: flex; gap: 10px; }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      background: var(--bg-panel);
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      margin-bottom: 2rem;
+    }
+
+    .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .input-group label { font-size: 0.75rem; text-transform: uppercase; color: var(--accent-secondary); font-weight: 700; }
+
+    input, select {
+      background: var(--bg-main);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 0.75rem;
+      border-radius: 4px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .btn-cyber {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 0.75rem 1.2rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+    .btn-cyber:hover { background: var(--accent); color: white; box-shadow: var(--glow-accent); }
+    .btn-secondary { border-color: var(--accent-secondary); color: var(--accent-secondary); }
+    .btn-secondary:hover { background: var(--accent-secondary); color: #000; box-shadow: 0 0 12px var(--accent-secondary); }
+
+    #deepScan {
+      display: none;
+      background: rgba(255, 51, 102, 0.05);
+      border: 1px dashed var(--accent);
+      padding: 2rem;
+      text-align: center;
+      margin-top: -1rem;
+      margin-bottom: 2rem;
+      border-radius: 8px;
+    }
+    .deep-scan-grid { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; }
+
+    .table-container { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border-subtle); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { padding: 1rem; background: var(--bg-panel-alt); text-transform: uppercase; font-size: 0.75rem; color: var(--text-muted); border-bottom: 1px solid var(--border-subtle); }
+    td { padding: 1rem; border-bottom: 1px solid var(--border-subtle); font-size: 0.95rem; vertical-align: middle; }
+    tr:hover { background: rgba(255, 255, 255, 0.02); }
+
+    .role-link { color: var(--accent-secondary); text-decoration: none; font-weight: 600; }
+    .role-link:hover { text-decoration: underline; }
+
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+    .pill-type { background: var(--accent-soft); color: var(--accent); }
+    .pill-region { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+
+    .status-badge { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .status-open { color: var(--status-open); }
+    .status-open .dot { background: var(--status-open); box-shadow: 0 0 8px var(--status-open); }
+    .status-onboarding { color: var(--status-onboarding); }
+    .status-onboarding .dot { background: var(--status-onboarding); box-shadow: 0 0 8px var(--status-onboarding); }
+    .status-portal { color: var(--status-portal); }
+    .status-portal .dot { background: var(--status-portal); box-shadow: 0 0 8px var(--status-portal); }
+
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px);
+      z-index: 1000; justify-content: center; align-items: center; padding: 1rem;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-content {
+      background: var(--bg-panel); border: 1px solid var(--accent);
+      padding: 2.5rem; width: 100%; max-width: 400px; border-radius: 4px; position: relative;
+    }
+    .modal-close { position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
+    
+    .social-link {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem; margin-bottom: 0.75rem; border: 1px solid var(--border-subtle);
+      text-decoration: none; color: var(--text-main); font-weight: 600; text-transform: uppercase;
+      letter-spacing: 1px; font-size: 0.85rem; transition: 0.3s;
+    }
+    .social-link:hover { border-color: var(--accent-secondary); background: rgba(51, 255, 217, 0.05); transform: translateX(5px); }
+
+    footer { margin-top: 3rem; text-align: center; color: var(--text-muted); font-size: 0.8rem; padding-bottom: 2rem; }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard">
+    <header>
+      <div class="title-group">
+        <h1>Freelancer Hit List</h1>
+        <p>Active Job Boards & AI Portals • <span id="visible-count">0</span> Signal Sources</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-cyber btn-secondary" onclick="shareSearch()">Share Search</button>
+        <button class="btn-cyber" id="openModal">Contact Dev</button>
+      </div>
+    </header>
+
+    <div class="controls">
+      <div class="input-group">
+        <label>System Search</label>
+        <input type="text" id="searchInput" placeholder="Query company, role, or tags..." />
+      </div>
+      <div class="input-group">
+        <label>Access Status</label>
+        <select id="statusFilter">
+          <option value="all">All Statuses</option>
+          <option value="open">Direct Access</option>
+          <option value="onboarding">Direct Landing</option>
+          <option value="portal">Login Required</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Work Sector</label>
+        <select id="typeFilter">
+          <option value="all">All Types</option>
+          <option value="Freelance">Freelance</option>
+          <option value="AI Training">AI Training</option>
+          <option value="Contract">Contract</option>
+          <option value="Full-time">Full-time</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="deepScan">
+      <h3 style="color: var(--accent); text-transform: uppercase; letter-spacing: 2px;">No Local Match Found</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Signal "<span id="queryTerm" style="color: var(--text-main); font-weight: bold;"></span>" not in database. Trigger external uplink?</p>
+      <div class="deep-scan-grid">
+        <button class="btn-cyber" style="border-color: #4285F4; color: #4285F4;" onclick="externalLaunch('google')">Google Jobs</button>
+        <button class="btn-cyber" style="border-color: #FF9900; color: #FF9900;" onclick="externalLaunch('indeed')">Indeed</button>
+        <button class="btn-cyber" style="border-color: #0077B5; color: #0077B5;" onclick="externalLaunch('linkedin')">LinkedIn</button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Source / Agency</th>
+            <th>Latest Role / Link</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Intelligence Notes</th>
+          </tr>
+        </thead>
+        <tbody id="jobTableBody"></tbody>
+      </table>
+    </div>
+
+    <footer>
+      TERMINAL_STREAMS // Art__ // 2026
+      MULTISTOP_TECH
+    </footer>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content">
+      <button class="modal-close" id="closeModal">&times;</button>
+      <h2 style="color: var(--accent); margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 2px;">Comms Channel</h2>
+      
+      <a href="https://multistoptech.substack.com/" target="_blank" class="social-link">Substack <span>[ SIGNAL ]</span></a>
+      <a href="https://www.instagram.com/multistop_tech" target="_blank" class="social-link">Instagram <span>[ VISUAL ]</span></a>
+      <a href="https://github.com/CMDR7" target="_blank" class="social-link">GitHub <span>[ SOURCE ]</span></a>
+      <a href="https://www.linkedin.com/in/arthurrambojr" target="_blank" class="social-link">LinkedIn <span>[ NETWORK ]</span></a>
+
+      <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle); text-align: center;">
+        <p style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Identity: CMDR7 // Verified</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const jobData = [
+      {
+        company: "AI Jobs (.net)",
+        tagline: "Dedicated AI Aggregator",
+        role: "Browse AI/ML Roles",
+        link: "https://aijobs.net/",
+        type: ["Freelance", "Contract", "Full-time"],
+        region: "Global",
+        status: "open",
+        notes: "Completely open browsing. Direct links usually found in post descriptions."
+      },
+      {
+        company: "Jobtensor",
+        tagline: "AI/Tech Search Engine",
+        role: "AI & Data Science Roles",
+        link: "https://jobtensor.com/AI-Jobs",
+        type: ["Contract", "Full-time"],
+        region: "Remote",
+        status: "open",
+        notes: "Aggregates from company career pages. High-quality technical signal."
+      },
+      {
+        company: "Jooble",
+        tagline: "Global Freelance Aggregator",
+        role: "AI Training Contracts",
+        link: "https://jooble.org/jobs-freelance-ai",
+        type: ["Freelance", "Gig"],
+        region: "Global",
+        status: "open",
+        notes: "Scrapes niche boards. Good for finding obscure or low-competition contracts."
+      },
+      {
+        company: "Remotive",
+        tagline: "Remote Tech Board",
+        role: "Remote Data & AI Gigs",
+        link: "https://remotive.com/remote-jobs/data",
+        type: ["Freelance", "Remote"],
+        region: "Remote",
+        status: "open",
+        notes: "Verified remote roles. One-click access to application pages."
+      },
+      {
+        company: "Braintrust",
+        tagline: "User-owned talent network",
+        role: "AI Engineer / Designer",
+        link: "https://www.usebraintrust.com/",
+        type: ["Contract", "Freelance"],
+        region: "Global",
+        status: "onboarding",
+        notes: "Requires profile approval. Matches talent with Fortune 1000 clients."
+      },
+      {
+        company: "A-Team",
+        tagline: "Elite builder guilds",
+        role: "Software Builder",
+        link: "https://www.a-team.io/",
+        type: ["Freelance", "Contract"],
+        region: "Global",
+        status: "onboarding",
+        notes: "Strict vetting. Form squads to build for high-growth startups."
+      },
+      {
+        company: "HiringCafe",
+        tagline: "No-login AI job board",
+        role: "AI Developer / Scientist",
+        link: "https://hiringcafe.com/",
+        type: ["Full-time", "Contract"],
+        region: "Global",
+        status: "open",
+        notes: "No accounts required. Links directly to company ATS pages."
+      },
+      {
+        company: "Outlier.ai",
+        tagline: "AI Training Platform",
+        role: "AI Trainer / Expert",
+        link: "https://outlier.ai",
+        type: ["AI Training"],
+        region: "Global",
+        status: "portal",
+        notes: "Primary portal for RLHF training. Requires assessment and login."
+      },
+      {
+        company: "DataAnnotation.tech",
+        tagline: "Coding & Creative AI Training",
+        role: "AI Specialist",
+        link: "https://www.dataannotation.tech/",
+        type: ["AI Training", "Freelance"],
+        region: "US/UK/CA/AU",
+        status: "portal",
+        notes: "High-paying coding tasks. Login required after initial assessment."
+      },
+      {
+        company: "Worksome",
+        tagline: "Contract compliance platform",
+        role: "Freelance Consultant",
+        link: "https://www.worksome.com/",
+        type: ["Contract"],
+        region: "Global",
+        status: "portal",
+        notes: "Enterprise contract management. Requires portal registration."
+      }
+    ];
+
+    const bodyEl = document.getElementById("jobTableBody");
+    const visibleCountEl = document.getElementById("visible-count");
+    const searchInput = document.getElementById("searchInput");
+    const statusFilter = document.getElementById("statusFilter");
+    const typeFilter = document.getElementById("typeFilter");
+    const deepScan = document.getElementById("deepScan");
+    const queryTerm = document.getElementById("queryTerm");
+    const modalOverlay = document.getElementById("modalOverlay");
+
+    document.getElementById("openModal").onclick = () => modalOverlay.classList.add("active");
+    document.getElementById("closeModal").onclick = () => modalOverlay.classList.remove("active");
+    modalOverlay.onclick = (e) => { if(e.target === modalOverlay) modalOverlay.classList.remove("active"); };
+
+    function statusLabel(status) {
+      const labels = { open: "Direct Access", onboarding: "Direct Landing", portal: "Login Required" };
+      return labels[status] || status;
+    }
+
+    function shareSearch() {
+        const params = new URLSearchParams();
+        if (searchInput.value) params.set("q", searchInput.value);
+        if (statusFilter.value !== "all") params.set("status", statusFilter.value);
+        if (typeFilter.value !== "all") params.set("type", typeFilter.value);
+        
+        const shareURL = window.location.origin + window.location.pathname + '?' + params.toString();
+        const dummy = document.createElement("input");
+        document.body.appendChild(dummy);
+        dummy.value = shareURL;
+        dummy.select();
+        document.execCommand("copy");
+        document.body.removeChild(dummy);
+        
+        const btn = document.querySelector('.btn-secondary');
+        const originalText = btn.innerText;
+        btn.innerText = "COPIED TO CLIPBOARD!";
+        setTimeout(() => btn.innerText = originalText, 2000);
+    }
+
+    function externalLaunch(platform) {
+        const q = encodeURIComponent(searchInput.value);
+        const urls = {
+            google: `https://www.google.com/search?q=${q}+remote+ai+jobs`,
+            indeed: `https://www.indeed.com/jobs?q=${q}&l=Remote`,
+            linkedin: `https://www.linkedin.com/jobs/search/?keywords=${q}&location=Remote`
+        };
+        window.open(urls[platform], '_blank');
+    }
+
+    function renderJobs() {
+      const q = searchInput.value.toLowerCase();
+      const s = statusFilter.value;
+      const t = typeFilter.value;
+      
+      const params = new URLSearchParams(window.location.search);
+      if (q) params.set("q", q); else params.delete("q");
+      if (s !== "all") params.set("status", s); else params.delete("status");
+      if (t !== "all") params.set("type", t); else params.delete("type");
+      window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+
+      bodyEl.innerHTML = "";
+      let count = 0;
+
+      jobData.forEach(job => {
+        if (s !== "all" && job.status !== s) return;
+        if (t !== "all" && !job.type.includes(t)) return;
+        
+        const text = (job.company + job.role + job.notes + job.tagline + job.type.join(" ")).toLowerCase();
+        if (q && !text.includes(q)) return;
+
+        count++;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${count}</td>
+          <td style="font-weight:700;">${job.company}<br><span style="font-weight:400; font-size:0.75rem; color:var(--text-muted);">${job.tagline}</span></td>
+          <td><a href="${job.link}" target="_blank" class="role-link">${job.role}</a></td>
+          <td>${job.type.map(type => `<span class="pill pill-type">${type}</span>`).join(" ")}<br><span class="pill pill-region">${job.region}</span></td>
+          <td><div class="status-badge status-${job.status}"><div class="dot"></div>${statusLabel(job.status)}</div></td>
+          <td style="font-size:0.8rem; color:var(--text-muted); max-width:280px;">${job.notes}</td>
+        `;
+        bodyEl.appendChild(tr);
+      });
+
+      visibleCountEl.innerText = count;
+      
+      if (count === 0 && q !== "") {
+          deepScan.style.display = 'block';
+          queryTerm.innerText = q.toUpperCase();
+      } else {
+          deepScan.style.display = 'none';
+      }
+    }
+
+    function init() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has("q")) searchInput.value = params.get("q");
+        if (params.has("status")) statusFilter.value = params.get("status");
+        if (params.has("type")) typeFilter.value = params.get("type");
+        renderJobs();
+    }
+
+    searchInput.oninput = renderJobs;
+    statusFilter.onchange = renderJobs;
+    typeFilter.onchange = renderJobs;
+    init();
+  </script>
+</body>
+</html>
+
