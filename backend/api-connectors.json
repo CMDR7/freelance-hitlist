@@ -1,0 +1,35 @@
+{
+  "version": "2.6.0",
+  "connectors": [
+    {
+      "id": "jobicy-public-api",
+      "name": "Jobicy Public Jobs API",
+      "type": "api",
+      "endpoint": "https://jobicy.com/api/v2/remote-jobs",
+      "authentication": "none",
+      "enabled": true,
+      "polling": "no-more-than-hourly",
+      "attribution": {
+        "required": true,
+        "label": "Source: Jobicy",
+        "url": "https://jobicy.com/"
+      },
+      "notes": "Public JSON API. Preserve canonical Jobicy job URL and source attribution. Cache responses and avoid excessive requests."
+    },
+    {
+      "id": "arbeitnow-public-api",
+      "name": "Arbeitnow Free Job Board API",
+      "type": "api",
+      "endpoint": "https://www.arbeitnow.com/api/job-board-api",
+      "authentication": "none",
+      "enabled": true,
+      "polling": "controlled",
+      "attribution": {
+        "required": false,
+        "label": "Source: Arbeitnow",
+        "url": "https://www.arbeitnow.com/"
+      },
+      "notes": "Public no-key API with European job data and a remote indicator. Intended for job discovery and normalized ingestion."
+    }
+  ]
+}
