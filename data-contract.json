@@ -3,7 +3,7 @@
   "$id": "https://github.com/CMDR7/freelance-hitlist/blob/main/data-contract.json",
   "title": "FL-HL Intelligence Network Data Contract",
   "description": "Canonical data contract for sources, opportunities, acquisition feeds, discovery records, and synchronization state.",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "type": "object",
   "required": ["source", "opportunity", "feed", "discovery", "syncStatus"],
   "properties": {
@@ -22,6 +22,16 @@
         "required": { "type": "boolean" },
         "label": { "type": "string", "minLength": 1 },
         "url": { "type": "string", "format": "uri" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceIds", "feedIds", "acquisitionTypes"],
+      "properties": {
+        "sourceIds": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "feedIds": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "acquisitionTypes": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
       }
     },
     "source": {
@@ -47,10 +57,12 @@
     "opportunity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "sourceId", "title", "url", "engagement", "location", "status"],
+      "required": ["id", "canonicalId", "sourceId", "title", "url", "engagement", "location", "status", "freshness", "provenance", "duplicateCount"],
       "properties": {
         "id": { "type": "string", "minLength": 1 },
+        "canonicalId": { "type": "string", "minLength": 1 },
         "sourceId": { "type": "string", "minLength": 1 },
+        "sourceName": { "type": "string" },
         "title": { "type": "string", "minLength": 1 },
         "employer": { "type": "string" },
         "url": { "type": "string", "format": "uri" },
@@ -61,9 +73,15 @@
         "updatedAt": { "type": ["string", "null"], "format": "date-time" },
         "retrievedAt": { "type": ["string", "null"], "format": "date-time" },
         "status": { "type": "string", "enum": ["active", "closed", "unknown"] },
+        "freshness": { "type": "string", "enum": ["fresh", "stale", "unknown"] },
         "description": { "type": "string" },
         "notes": { "type": "string" },
-        "attribution": { "$ref": "#/$defs/attribution" }
+        "attribution": { "$ref": "#/$defs/attribution" },
+        "acquisition": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "stage": { "type": "string", "enum": ["ingested-candidate", "normalized"] },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "duplicateCount": { "type": "integer", "minimum": 1 },
+        "duplicateOf": { "type": ["string", "null"] }
       }
     },
     "feed": {
