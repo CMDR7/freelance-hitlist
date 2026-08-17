@@ -1,0 +1,41 @@
+{
+  "version": "2.5.0",
+  "feeds": [
+    {
+      "id": "remotefirst-ai",
+      "sourceId": "remotefirstjobs",
+      "type": "rss",
+      "name": "Remote First Jobs // AI",
+      "url": "https://remotefirstjobs.com/rss/jobs/ai.rss",
+      "enabled": true,
+      "credit": "Remote First Jobs"
+    },
+    {
+      "id": "jobicy-ai",
+      "sourceId": "jobicy",
+      "type": "rss",
+      "name": "Jobicy // AI Remote Jobs",
+      "url": "https://jobicy.com/feed/job_feed?search_keywords=AI",
+      "enabled": true,
+      "credit": "Jobicy"
+    },
+    {
+      "id": "remoteyeah-ai-native",
+      "sourceId": "remoteyeah",
+      "type": "rss",
+      "name": "RemoteYeah // AI-native Engineering",
+      "url": "https://remoteyeah.com/rss.xml",
+      "enabled": true,
+      "credit": "RemoteYeah"
+    },
+    {
+      "id": "weworkremotely-programming",
+      "sourceId": "weworkremotely",
+      "type": "rss",
+      "name": "We Work Remotely // Programming",
+      "url": "https://weworkremotely.com/categories/remote-programming-jobs.rss",
+      "enabled": true,
+      "credit": "We Work Remotely"
+    }
+  ]
+}
