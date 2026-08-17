@@ -48,7 +48,7 @@ It currently handles:
 - duplicate counting
 - malformed-record rejection
 
-Cloudflare Workers provides Web Crypto through `crypto.subtle`, including SHA-256 digest support, so the canonical IDs do not require a Node.js crypto dependency. citeturn0search0
+Cloudflare Workers provides Web Crypto through `crypto.subtle`, including SHA-256 digest support, so the canonical IDs do not require a Node.js crypto dependency.
 
 ## Deduplication policy
 
