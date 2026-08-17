@@ -1,6 +1,6 @@
 # FL-HL // Intelligence API
 
-V2.6 adds the first selective free-API acquisition layer to the Freelancer // Intelligence Network.
+V2.7 activates the normalization and deduplication layer for the Freelancer // Intelligence Network.
 
 ## Pipeline
 
@@ -14,30 +14,126 @@ INTELLIGENCE API
      +--> RSS / Atom feeds                   <-- V2.5
      +--> publication feeds                  <-- future
      +--> approved free APIs                 <-- V2.6
+     |
+     v
+NORMALIZE
+     |
+     v
+CANONICAL ID
+     |
+     v
+DEDUPLICATE
+     |
+     v
+NORMALIZED OPPORTUNITY
 ```
 
-## V2.6 connectors
+## V2.7 normalization
 
-### Jobicy Public Jobs API
+`backend/normalize.js` is the canonical transformation layer between external candidates and the FL-HL opportunity contract.
 
-- Public JSON endpoint
-- No API key
-- Up to 100 listings/request
-- Canonical Jobicy URLs must be preserved
-- Attribution is required
-- Requests must be cached/controlled and must not run more frequently than once per hour
+It currently handles:
 
-### Arbeitnow Free Job Board API
+- URL validation and canonicalization
+- removal of common tracking parameters
+- Unicode/text normalization
+- employer normalization
+- engagement/location/tag normalization
+- publication/retrieval timestamp normalization
+- freshness classification
+- canonical opportunity IDs using SHA-256
+- provenance tracking across feeds and acquisition types
+- source attribution preservation
+- duplicate merging
+- duplicate counting
+- malformed-record rejection
 
-- Public JSON endpoint
-- No API key
-- European job data
-- Includes a remote indicator
-- Source attribution is retained in FL-HL records
+Cloudflare Workers provides Web Crypto through `crypto.subtle`, including SHA-256 digest support, so the canonical IDs do not require a Node.js crypto dependency. citeturn0search0
 
-Connector registry: `api-connectors.json`
+## Deduplication policy
 
-RSS registry: `feed-registry.json`
+FL-HL uses a conservative two-stage identity strategy:
+
+1. **Canonical URL match** is the primary duplicate key.
+2. **Employer + title + location** is the secondary semantic key when the employer is known.
+
+This prevents obvious cross-feed duplicates without aggressively collapsing unrelated jobs that merely have similar titles.
+
+When duplicates are merged, the resulting record retains:
+
+- one canonical opportunity ID
+- merged tags/location/engagement data
+- merged provenance
+- source attribution
+- the best available description
+- the latest available retrieval/update metadata
+- `duplicateCount`
+
+## Freshness
+
+Freshness is informational and does not automatically close a job.
+
+- `fresh` = published within 45 days
+- `stale` = published more than 45 days ago
+- `unknown` = no usable publication timestamp
+
+A stale listing remains visible until a later lifecycle stage establishes a reliable closed/stale policy.
+
+## V2.7 live route
+
+```text
+GET /api/opportunities?live=true
+```
+
+This route acquires the current RSS and API candidates, normalizes them, deduplicates them in memory, and returns the resulting normalized opportunity collection.
+
+Optional query parameters:
+
+```text
+?live=true&limit=50
+?live=true&q=AI trainer
+?live=true&region=Germany
+```
+
+The response also includes pipeline metrics:
+
+- candidates acquired
+- candidates normalized
+- candidates rejected
+- unique opportunities
+- duplicates removed
+- stale opportunities
+- unknown-freshness opportunities
+
+## Persistence boundary
+
+V2.7 is intentionally **in-memory only**.
+
+```text
+RSS / API
+   |
+   v
+INGESTED CANDIDATES
+   |
+   v
+NORMALIZATION
+   |
+   v
+DEDUPLICATION
+   |
+   v
+NORMALIZED RESULTS
+   |
+   X  D1 persistence (later)
+```
+
+This lets us validate data quality before introducing storage and scheduled synchronization.
+
+## Attribution
+
+Attribution is a first-class contract field. Required provider attribution is preserved through normalization so the V2.8 presentation layer can render the correct source credit.
+
+Remote First Jobs and We Work Remotely explicitly request source attribution. Jobicy's current API terms also require preserving the canonical Jobicy URL and source attribution.
 
 ## Routes
 
@@ -49,34 +145,10 @@ RSS registry: `feed-registry.json`
 - `GET /api/ingest/rss?feed=<feed-id>`
 - `GET /api/ingest/api?connector=jobicy`
 - `GET /api/ingest/api?connector=arbeitnow`
-- `GET /api/sources`
 - `GET /api/opportunities`
+- `GET /api/opportunities?live=true`
+- `GET /api/sources`
 - `GET /api/sync/status`
-
-## Important pipeline boundary
-
-V2.6 still stops at **ingested candidates**. Connector responses are fetched and mapped into the canonical opportunity shape, but they are not yet persisted into D1, deduplicated, promoted into the curated source index, or used to replace the static frontend dataset.
-
-```text
-RSS / API
-   |
-   v
-FETCH
-   |
-   v
-PARSE / MAP
-   |
-   v
-INGESTED CANDIDATE
-   |
-   +---- V2.7 NORMALIZE + DEDUPLICATE
-```
-
-## Attribution
-
-Attribution metadata is now a first-class field in `data-contract.json`. Required provider attribution is preserved with each ingested candidate so the eventual V2.8 presentation layer can render the correct source credit.
-
-Remote First Jobs and We Work Remotely explicitly request source attribution. Jobicy's current API terms also require preserving the canonical Jobicy URL and source attribution.
 
 ## Security
 
@@ -85,7 +157,7 @@ Remote First Jobs and We Work Remotely explicitly request source attribution. Jo
 - Browser requests use the normalized API boundary.
 - API ingestion runs server-side.
 - Unknown sources remain discovery records until human approval.
-- V2.6 ingestion is on-demand; scheduled synchronization is intentionally deferred.
+- V2.7 ingestion remains on-demand; scheduled synchronization is intentionally deferred.
 
 ## Deployment
 
