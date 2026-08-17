@@ -1,10 +1,8 @@
 # FL-HL // Intelligence API
 
-V2.5 introduces the first live acquisition layer for the Freelancer // Intelligence Network.
+V2.6 adds the first selective free-API acquisition layer to the Freelancer // Intelligence Network.
 
-## Purpose
-
-The browser UI will eventually consume one normalized API instead of calling external job sources directly.
+## Pipeline
 
 ```text
 FL-HL CLIENT
@@ -12,65 +10,82 @@ FL-HL CLIENT
      v
 INTELLIGENCE API
      |
-     +--> D1 / cache
-     +--> RSS / Atom feeds       <-- V2.5
-     +--> publication feeds
-     +--> approved free APIs     <-- V2.6
+     +--> D1 / cache                         <-- future
+     +--> RSS / Atom feeds                   <-- V2.5
+     +--> publication feeds                  <-- future
+     +--> approved free APIs                 <-- V2.6
 ```
 
-## Current V2.5 state
+## V2.6 connectors
 
-The Worker can now fetch a controlled registry of public RSS feeds and expose the resulting listings as **ingested candidates**.
+### Jobicy Public Jobs API
 
-Configured public feeds currently include:
+- Public JSON endpoint
+- No API key
+- Up to 100 listings/request
+- Canonical Jobicy URLs must be preserved
+- Attribution is required
+- Requests must be cached/controlled and must not run more frequently than once per hour
 
-- Remote First Jobs // AI
-- Jobicy // AI Remote Jobs
-- RemoteYeah // remote engineering feed
-- We Work Remotely // Programming
+### Arbeitnow Free Job Board API
 
-Feed registry: `feed-registry.json`
+- Public JSON endpoint
+- No API key
+- European job data
+- Includes a remote indicator
+- Source attribution is retained in FL-HL records
 
-Available routes:
+Connector registry: `api-connectors.json`
+
+RSS registry: `feed-registry.json`
+
+## Routes
 
 - `GET /api`
 - `GET /api/health`
 - `GET /api/feeds`
+- `GET /api/connectors`
 - `GET /api/ingest/rss`
 - `GET /api/ingest/rss?feed=<feed-id>`
+- `GET /api/ingest/api?connector=jobicy`
+- `GET /api/ingest/api?connector=arbeitnow`
 - `GET /api/sources`
 - `GET /api/opportunities`
-- `GET /api/opportunities?live=true`
 - `GET /api/sync/status`
 
-### Important pipeline boundary
+## Important pipeline boundary
 
-V2.5 deliberately stops after acquisition/parsing:
+V2.6 still stops at **ingested candidates**. Connector responses are fetched and mapped into the canonical opportunity shape, but they are not yet persisted into D1, deduplicated, promoted into the curated source index, or used to replace the static frontend dataset.
 
 ```text
-PUBLIC RSS
+RSS / API
    |
    v
 FETCH
    |
    v
-PARSE
+PARSE / MAP
    |
    v
 INGESTED CANDIDATE
+   |
+   +---- V2.7 NORMALIZE + DEDUPLICATE
 ```
 
-Normalization, deduplication, persistence, source promotion, and scheduled synchronization are later stages. This prevents live feed data from silently entering the trusted source index before the V2.7/V3.0 governance layers exist.
+## Attribution
 
-## Feed usage rules
+Attribution metadata is now a first-class field in `data-contract.json`. Required provider attribution is preserved with each ingested candidate so the eventual V2.8 presentation layer can render the correct source credit.
 
-Only public feeds with documented access/use conditions are registered. Where a provider requests attribution or imposes usage restrictions, those requirements remain part of the source integration documentation and must be respected.
+Remote First Jobs and We Work Remotely explicitly request source attribution. Jobicy's current API terms also require preserving the canonical Jobicy URL and source attribution.
 
-The registry should not be expanded merely because a feed is technically reachable. Each new feed must be checked for accessibility, relevance, freshness, licensing/usage conditions, and stability.
+## Security
 
-## Planned storage
-
-Cloudflare D1 remains the intended relational store because the project needs relationships between sources, feeds, opportunities, and discovery records. D1 will be introduced after the ingestion pipeline has been validated.
+- No API keys belong in `index.html`.
+- No secrets are committed to Git.
+- Browser requests use the normalized API boundary.
+- API ingestion runs server-side.
+- Unknown sources remain discovery records until human approval.
+- V2.6 ingestion is on-demand; scheduled synchronization is intentionally deferred.
 
 ## Deployment
 
@@ -81,13 +96,4 @@ cd backend
 wrangler deploy
 ```
 
-Cloudflare authentication, Worker deployment, and creation of the eventual D1 database remain infrastructure/account operations and are not automated from this repository.
-
-## Security rules
-
-- No API keys belong in `index.html`.
-- No secrets are committed to Git.
-- External source credentials will be stored as Worker secrets when required.
-- Browser requests will use the normalized API boundary.
-- Unknown sources remain discovery records until human approval.
-- Feed ingestion is server-side so the browser does not need direct access to external feeds.
+Cloudflare authentication, Worker deployment, and D1 creation remain infrastructure/account operations and are not automated from this repository.
