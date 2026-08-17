@@ -1,41 +1,41 @@
 {
-  "version": "2.5.0",
+  "version": "2.6.0",
   "feeds": [
     {
-      "id": "remotefirst-ai",
-      "sourceId": "remotefirstjobs",
+      "id": "remote-first-jobs-ai",
+      "sourceId": "remote-first-jobs",
       "type": "rss",
       "name": "Remote First Jobs // AI",
       "url": "https://remotefirstjobs.com/rss/jobs/ai.rss",
       "enabled": true,
-      "credit": "Remote First Jobs"
+      "attribution": { "required": true, "label": "Source: Remote First Jobs", "url": "https://remotefirstjobs.com/" }
     },
     {
       "id": "jobicy-ai",
       "sourceId": "jobicy",
       "type": "rss",
       "name": "Jobicy // AI Remote Jobs",
-      "url": "https://jobicy.com/feed/job_feed?search_keywords=AI",
+      "url": "https://jobicy.com/jobs/feed?tag=ai",
       "enabled": true,
-      "credit": "Jobicy"
+      "attribution": { "required": true, "label": "Source: Jobicy", "url": "https://jobicy.com/" }
     },
     {
-      "id": "remoteyeah-ai-native",
+      "id": "remoteyeah-engineering",
       "sourceId": "remoteyeah",
       "type": "rss",
-      "name": "RemoteYeah // AI-native Engineering",
+      "name": "RemoteYeah // Engineering",
       "url": "https://remoteyeah.com/rss.xml",
       "enabled": true,
-      "credit": "RemoteYeah"
+      "attribution": { "required": false, "label": "Source: RemoteYeah", "url": "https://remoteyeah.com/" }
     },
     {
       "id": "weworkremotely-programming",
-      "sourceId": "weworkremotely",
+      "sourceId": "we-work-remotely",
       "type": "rss",
       "name": "We Work Remotely // Programming",
       "url": "https://weworkremotely.com/categories/remote-programming-jobs.rss",
       "enabled": true,
-      "credit": "We Work Remotely"
+      "attribution": { "required": true, "label": "Source: We Work Remotely", "url": "https://weworkremotely.com/" }
     }
   ]
 }
