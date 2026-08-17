@@ -40,6 +40,7 @@ export function canonicalizeUrl(value = "") {
   if (!raw) return "";
   try {
     const url = new URL(raw);
+    if (!/^https?:$/.test(url.protocol)) return "";
     url.hash = "";
     [...url.searchParams.keys()].forEach((key) => {
       if (TRACKING_PARAMS.has(key.toLowerCase())) url.searchParams.delete(key);
@@ -49,7 +50,7 @@ export function canonicalizeUrl(value = "") {
     url.pathname = url.pathname.replace(/\/+/g, "/").replace(/\/$/, "") || "/";
     return url.toString();
   } catch {
-    return raw.replace(/[?#].*$/, "");
+    return "";
   }
 }
 
@@ -74,12 +75,7 @@ async function sha256(value) {
 
 function deriveEmployer(candidate) {
   return cleanText(
-    candidate.employer ||
-    candidate.companyName ||
-    candidate.company ||
-    candidate.company_name ||
-    candidate.employerName ||
-    "Unknown employer",
+    candidate.employer || candidate.companyName || candidate.company || candidate.company_name || candidate.employerName || "Unknown employer",
   ) || "Unknown employer";
 }
 
@@ -88,23 +84,11 @@ function deriveSourceName(candidate) {
 }
 
 function deriveTags(candidate) {
-  return asArray([
-    candidate.tags,
-    candidate.jobIndustry,
-    candidate.jobLevel,
-    candidate.category,
-    candidate.jobCategory,
-  ]);
+  return asArray([candidate.tags, candidate.jobIndustry, candidate.jobLevel, candidate.category, candidate.jobCategory]);
 }
 
 function deriveEngagement(candidate) {
-  return asArray([
-    candidate.engagement,
-    candidate.jobType,
-    candidate.job_types,
-    candidate.job_type,
-    candidate.type,
-  ]);
+  return asArray([candidate.engagement, candidate.jobType, candidate.job_types, candidate.job_type, candidate.type]);
 }
 
 function deriveLocation(candidate) {
@@ -126,8 +110,10 @@ function chooseText(primary, secondary, fallback = "") {
 }
 
 export async function normalizeCandidate(candidate, options = {}) {
-  const retrievedAt = parseDate(candidate.retrievedAt) || new Date().toISOString();
   const url = canonicalizeUrl(candidate.url || candidate.link || "");
+  if (!url) return null;
+
+  const retrievedAt = parseDate(candidate.retrievedAt) || new Date().toISOString();
   const employer = deriveEmployer(candidate);
   const title = chooseText(candidate.title, candidate.jobTitle, "Untitled opportunity");
   const sourceId = cleanText(candidate.sourceId || candidate.source || "unknown-source");
@@ -139,13 +125,10 @@ export async function normalizeCandidate(candidate, options = {}) {
   const feedIds = mergeArrays(candidate.feedId);
   const acquisitionTypes = mergeArrays(candidate.acquisition || "unknown");
   const sourceIds = [sourceId];
-  const canonicalUrl = url || null;
   const semanticKey = employer !== "Unknown employer"
     ? [normalizeText(employer), normalizeText(title), normalizeText(deriveLocation(candidate).join(" "))].join("|")
     : null;
-  const fingerprintInput = canonicalUrl
-    ? `url|${canonicalUrl}`
-    : `semantic|${semanticKey || `${sourceId}|${normalizeText(title)}`}`;
+  const fingerprintInput = `url|${url}`;
   const canonicalId = `opp-${(await sha256(fingerprintInput)).slice(0, 24)}`;
 
   return {
@@ -155,7 +138,7 @@ export async function normalizeCandidate(candidate, options = {}) {
     sourceName,
     employer,
     title,
-    url: canonicalUrl || cleanText(candidate.url || candidate.link || ""),
+    url,
     engagement: deriveEngagement(candidate),
     location: deriveLocation(candidate),
     tags: deriveTags(candidate),
@@ -169,17 +152,10 @@ export async function normalizeCandidate(candidate, options = {}) {
     attribution,
     acquisition: acquisitionTypes,
     stage: "normalized",
-    provenance: {
-      sourceIds,
-      feedIds,
-      acquisitionTypes,
-    },
+    provenance: { sourceIds, feedIds, acquisitionTypes },
     duplicateCount: 1,
     duplicateOf: null,
-    _dedupe: {
-      canonicalUrl,
-      semanticKey,
-    },
+    _dedupe: { canonicalUrl: url, semanticKey },
   };
 }
 
@@ -220,7 +196,8 @@ function mergeOpportunity(existing, incoming) {
 }
 
 export async function normalizeAndDeduplicate(candidates = []) {
-  const normalized = await Promise.all(candidates.map((candidate) => normalizeCandidate(candidate)));
+  const normalizedResults = await Promise.all(candidates.map((candidate) => normalizeCandidate(candidate)));
+  const normalized = normalizedResults.filter(Boolean);
   const byUrl = new Map();
   const bySemantic = new Map();
   const output = [];
@@ -252,6 +229,7 @@ export async function normalizeAndDeduplicate(candidates = []) {
     data,
     inputCount: candidates.length,
     normalizedCount: normalized.length,
+    rejectedCount: candidates.length - normalized.length,
     uniqueCount: data.length,
     duplicatesRemoved,
     staleCount: data.filter((item) => item.freshness === "stale").length,
