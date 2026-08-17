@@ -3,7 +3,7 @@
   "$id": "https://github.com/CMDR7/freelance-hitlist/blob/main/data-contract.json",
   "title": "FL-HL Intelligence Network Data Contract",
   "description": "Canonical data contract for sources, opportunities, acquisition feeds, discovery records, and synchronization state.",
-  "version": "2.2.0",
+  "version": "2.5.0",
   "type": "object",
   "required": ["source", "opportunity", "feed", "discovery", "syncStatus"],
   "properties": {
@@ -14,6 +14,16 @@
     "syncStatus": { "$ref": "#/$defs/syncStatus" }
   },
   "$defs": {
+    "attribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "label", "url"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "label": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "format": "uri" }
+      }
+    },
     "source": {
       "type": "object",
       "additionalProperties": false,
@@ -29,6 +39,7 @@
         "verification": { "type": "string", "enum": ["curated", "discovered", "rejected"] },
         "access": { "type": "string", "enum": ["open", "onboarding", "portal", "unknown"] },
         "notes": { "type": "string" },
+        "attribution": { "$ref": "#/$defs/attribution" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       }
@@ -50,7 +61,8 @@
         "retrievedAt": { "type": ["string", "null"], "format": "date-time" },
         "status": { "type": "string", "enum": ["active", "closed", "unknown"] },
         "description": { "type": "string" },
-        "notes": { "type": "string" }
+        "notes": { "type": "string" },
+        "attribution": { "$ref": "#/$defs/attribution" }
       }
     },
     "feed": {
@@ -66,7 +78,8 @@
         "status": { "type": "string", "enum": ["healthy", "degraded", "offline", "unknown"] },
         "lastSync": { "type": ["string", "null"], "format": "date-time" },
         "lastSuccess": { "type": ["string", "null"], "format": "date-time" },
-        "error": { "type": ["string", "null"] }
+        "error": { "type": ["string", "null"] },
+        "attribution": { "$ref": "#/$defs/attribution" }
       }
     },
     "discovery": {
