@@ -3,7 +3,7 @@
   "$id": "https://github.com/CMDR7/freelance-hitlist/blob/main/data-contract.json",
   "title": "FL-HL Intelligence Network Data Contract",
   "description": "Canonical data contract for sources, opportunities, acquisition feeds, discovery records, and synchronization state.",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "type": "object",
   "required": ["source", "opportunity", "feed", "discovery", "syncStatus"],
   "properties": {
@@ -52,6 +52,7 @@
         "id": { "type": "string", "minLength": 1 },
         "sourceId": { "type": "string", "minLength": 1 },
         "title": { "type": "string", "minLength": 1 },
+        "employer": { "type": "string" },
         "url": { "type": "string", "format": "uri" },
         "engagement": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
         "location": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
