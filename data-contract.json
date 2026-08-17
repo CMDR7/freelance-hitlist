@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/CMDR7/freelance-hitlist/blob/main/data-contract.json",
+  "title": "FL-HL Intelligence Network Data Contract",
+  "description": "Canonical data contract for sources, opportunities, acquisition feeds, discovery records, and synchronization state.",
+  "version": "2.2.0",
+  "type": "object",
+  "required": ["source", "opportunity", "feed", "discovery", "syncStatus"],
+  "properties": {
+    "source": { "$ref": "#/$defs/source" },
+    "opportunity": { "$ref": "#/$defs/opportunity" },
+    "feed": { "$ref": "#/$defs/feed" },
+    "discovery": { "$ref": "#/$defs/discovery" },
+    "syncStatus": { "$ref": "#/$defs/syncStatus" }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "type", "url", "region", "categories", "verification"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "tagline": { "type": "string" },
+        "type": { "type": "string", "enum": ["platform", "agency", "aggregator", "company", "network", "research", "marketplace", "other"] },
+        "url": { "type": "string", "format": "uri" },
+        "region": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "categories": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "verification": { "type": "string", "enum": ["curated", "discovered", "rejected"] },
+        "access": { "type": "string", "enum": ["open", "onboarding", "portal", "unknown"] },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "opportunity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sourceId", "title", "url", "engagement", "location", "status"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "sourceId": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "format": "uri" },
+        "engagement": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "location": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "tags": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "publishedAt": { "type": ["string", "null"], "format": "date-time" },
+        "updatedAt": { "type": ["string", "null"], "format": "date-time" },
+        "retrievedAt": { "type": ["string", "null"], "format": "date-time" },
+        "status": { "type": "string", "enum": ["active", "closed", "unknown"] },
+        "description": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    },
+    "feed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sourceId", "type", "url", "enabled", "status"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "sourceId": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "enum": ["api", "rss", "atom", "json", "publication", "career-page", "manual"] },
+        "url": { "type": "string", "format": "uri" },
+        "enabled": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["healthy", "degraded", "offline", "unknown"] },
+        "lastSync": { "type": ["string", "null"], "format": "date-time" },
+        "lastSuccess": { "type": ["string", "null"], "format": "date-time" },
+        "error": { "type": ["string", "null"] }
+      }
+    },
+    "discovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sourceName", "sourceUrl", "detectedAt", "status"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "sourceName": { "type": "string", "minLength": 1 },
+        "sourceUrl": { "type": "string", "format": "uri" },
+        "detectedAt": { "type": "string", "format": "date-time" },
+        "opportunityCount": { "type": "integer", "minimum": 0 },
+        "evidence": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] }
+      }
+    },
+    "syncStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "lastRunAt"],
+      "properties": {
+        "status": { "type": "string", "enum": ["idle", "running", "healthy", "degraded", "failed"] },
+        "lastRunAt": { "type": ["string", "null"], "format": "date-time" },
+        "lastSuccessfulRunAt": { "type": ["string", "null"], "format": "date-time" },
+        "sourcesChecked": { "type": "integer", "minimum": 0 },
+        "opportunitiesIngested": { "type": "integer", "minimum": 0 },
+        "opportunitiesUpdated": { "type": "integer", "minimum": 0 },
+        "opportunitiesRejected": { "type": "integer", "minimum": 0 },
+        "errorCount": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}
