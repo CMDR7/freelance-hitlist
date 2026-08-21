@@ -1,8 +1,8 @@
 name = "fl-hl-intelligence-api"
-main = "worker.js"
+main = "worker-v28.js"
 compatibility_date = "2026-08-17"
 
-# V2.7 keeps persistence disabled while normalization and deduplication are validated.
+# V2.8 keeps persistence disabled while source-balanced live acquisition is validated.
 # D1 will be introduced at the appropriate persistence stage.
 #
 # Example future binding:
@@ -12,4 +12,4 @@ compatibility_date = "2026-08-17"
 # database_id = "<created-in-cloudflare>"
 
 [vars]
-API_VERSION = "2.7.0"
+API_VERSION = "2.8.0"
