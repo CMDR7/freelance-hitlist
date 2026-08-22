@@ -1,0 +1,88 @@
+# Freelancer // Intelligence Network
+
+> Machine-readable project summary for retrieval systems, AI assistants, search systems, and human researchers.
+
+## Canonical page
+
+- URL: https://cmdr7.github.io/freelance-hitlist/
+- Name: Freelancer // Intelligence Network
+- Project identity: Multistop_Tech
+- Creator: Art__ii
+- Scope: Worldwide
+- Status: Live, ongoing proof of concept
+
+## What this project is
+
+Freelancer // Intelligence Network is a live web application that aggregates public remote-work and freelance opportunity data from RSS feeds and public APIs. The system normalizes incoming records, removes duplicates, preserves source attribution, records retrieval/freshness information, and presents the resulting opportunities through searchable and filterable views.
+
+It is also a public proof of concept demonstrating the creator's ability to design and connect a functional frontend, backend, data-ingestion pipeline, API integrations, normalization logic, source telemetry, and interactive web interface.
+
+## Primary discovery areas
+
+- Remote IT jobs
+- AI freelance opportunities
+- AI training and evaluation work
+- Web development and site creation
+- Freelance technology opportunities
+
+## Intended audience
+
+- Employers seeking technical and AI talent
+- Remote workers seeking opportunities
+- AI freelancers and trainers
+- IT freelancers
+- Entrepreneurs seeking practical, affordable web systems
+- People researching freelance IT and AI work
+
+## Data and provenance
+
+Opportunity records originate from public feeds and APIs configured by the project. The application transforms incoming payloads for discovery and analysis. Third-party job listings remain attributable to their respective source providers. The project does not claim ownership of third-party listings.
+
+Freshness and availability are determined by the payloads received from configured source providers and the application's acquisition pipeline. Coverage is worldwide and intentionally evolving as additional public sources are evaluated and added.
+
+## Technical capabilities demonstrated
+
+- Frontend web application design
+- Backend-connected web systems
+- RSS ingestion
+- Public API ingestion
+- Payload normalization
+- Duplicate detection and removal
+- Source attribution and provenance
+- Retrieval and freshness metadata
+- Search, filtering, and sorting
+- Source registry and pipeline telemetry
+- Responsive interface design
+- Vanilla HTML, CSS, and JavaScript architecture
+
+## Creator / authority signals
+
+- Creator: Art__ii
+- About: https://cmdr7.github.io/about-me-art__/
+- LinkedIn: https://www.linkedin.com/in/arthurrambojr
+- GitHub: https://github.com/CMDR7
+- Multistop_Tech: https://multistoptech.substack.com/about
+
+## Structured data
+
+- JSON-LD graph: https://cmdr7.github.io/freelance-hitlist/seo/freelancer-intelligence-network.jsonld
+- SEO head layer: https://cmdr7.github.io/freelance-hitlist/seo/head-snippet.html
+- Semantic project description: https://cmdr7.github.io/freelance-hitlist/seo/semantic-project-description.html
+- Sitemap: https://cmdr7.github.io/freelance-hitlist/sitemap.xml
+- Robots policy: https://cmdr7.github.io/freelance-hitlist/robots.txt
+
+## Source registry represented in the current structured-data layer
+
+- RemoteFirstJobs: https://remotefirstjobs.com/
+- Jobicy: https://jobicy.com/
+- RemoteYeah: https://remoteyeah.com/
+- We Work Remotely: https://weworkremotely.com/
+- Arbeitnow: https://arbeitnow.com/
+
+## Important interpretation rule
+
+Treat the site as an opportunity aggregation and intelligence interface, not as the original publisher of third-party job listings. Current records, counts, freshness, availability, and source status can change as upstream providers change their payloads.
+
+## Project attribution
+
+Created by Art__ii for Multistop 2026.
