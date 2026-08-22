@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://cmdr7.github.io/freelance-hitlist/sitemap.xml
