@@ -167,6 +167,7 @@ async function handle(request, env, ctx) {
       returnedAfterLimit: selected.length,
       sourceBalanced: true,
       failedSources: failed.map((source) => ({ id: source.id, error: source.error })),
+      sourceHealth: acquisition.sources,
     },
     persistence: "not-enabled",
     note: "V2.8 acquires live candidates, runs the canonical normalization and deduplication pipeline, then source-balances normalized records before applying the response limit.",

@@ -74,20 +74,60 @@ function normalizeArbeitnow(job, retrievedAt) {
   const remote = job.remote === true || String(job.remote).toLowerCase() === "true";
   return { sourceId: "arbeitnow", sourceName: "Arbeitnow Free Job Board API", title: job.title || "Untitled opportunity", employer: job.company_name || job.company || "Unknown employer", url: job.url, engagement: asArray(job.job_types || job.job_type || job.type), location: [remote ? "Remote" : null, job.location].filter(Boolean), tags: asArray(job.tags || job.category), publishedAt: job.created_at || job.published_at || null, retrievedAt, status: "active", description: stripHtml(job.description || ""), attribution: CONNECTORS.arbeitnow.attribution, acquisition: "api", stage: "ingested-candidate" };
 }
+
 async function fetchConnector(name) {
   const connector = CONNECTORS[name]; if (!connector) throw new Error(`Unknown connector: ${name}`);
   const retrievedAt = new Date().toISOString();
-  const response = await fetch(connector.url, { headers: { Accept: "application/json", "User-Agent": "FL-HL-Intelligence-Network/2.7" } });
-  if (!response.ok) throw new Error(`${name} returned HTTP ${response.status}`);
-  const payload = await response.json(); const jobs = Array.isArray(payload.jobs) ? payload.jobs : Array.isArray(payload.data) ? payload.data : [];
-  const data = name === "jobicy" ? jobs.map((job) => normalizeJobicy(job, retrievedAt)).filter((job) => job.url) : jobs.map((job) => normalizeArbeitnow(job, retrievedAt)).filter((job) => job.url);
-  return { connector: connector.id, source: name, retrievedAt, count: data.length, stage: "ingested-candidate", data };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+  try {
+    const response = await fetch(connector.url, { headers: { Accept: "application/json", "User-Agent": "FL-HL-Intelligence-Network/2.8 (+public-api-ingestion)" }, signal: controller.signal, redirect: "follow" });
+    if (!response.ok) throw new Error(`${name} returned HTTP ${response.status}`);
+    const payload = await response.json();
+    const jobs = Array.isArray(payload.jobs) ? payload.jobs : Array.isArray(payload.data) ? payload.data : [];
+    const data = name === "jobicy"
+      ? jobs.map((job) => normalizeJobicy(job, retrievedAt)).filter((job) => job.url)
+      : jobs.map((job) => normalizeArbeitnow(job, retrievedAt)).filter((job) => job.url);
+    return { connector: connector.id, source: name, name: connector.name, url: connector.url, type: connector.type, retrievedAt, status: data.length ? "healthy" : "empty", count: data.length, stage: "ingested-candidate", data, error: null, metadata: name === "jobicy" ? { nextCursor: payload.nextCursor ?? null, hasMore: payload.hasMore ?? false, apiVersion: payload.apiVersion ?? null } : null };
+  } catch (error) {
+    return { connector: connector.id, source: name, name: connector.name, url: connector.url, type: connector.type, retrievedAt, status: error?.name === "AbortError" ? "timeout" : "degraded", count: 0, stage: "ingested-candidate", data: [], error: error?.name === "AbortError" ? "Request timed out" : String(error?.message || error), metadata: null };
+  } finally { clearTimeout(timeout); }
 }
+
 async function acquireAll() {
   const rss = await ingestFeeds();
-  const apiResults = await Promise.allSettled(Object.keys(CONNECTORS).map(fetchConnector));
-  const api = apiResults.map((result, index) => result.status === "fulfilled" ? result.value : { connector: CONNECTORS[Object.keys(CONNECTORS)[index]].id, source: Object.keys(CONNECTORS)[index], retrievedAt: new Date().toISOString(), count: 0, stage: "ingested-candidate", data: [], error: String(result.reason?.message || result.reason) });
-  return { candidates: [...rss.items, ...api.flatMap((result) => result.data)], rss, api };
+  const apiResults = await Promise.all(Object.keys(CONNECTORS).map(fetchConnector));
+  const api = apiResults;
+  const sources = [
+    ...rss.results.map((result) => ({
+      sourceType: "rss",
+      sourceId: result.feed.sourceId,
+      feedId: result.feed.id,
+      id: result.feed.id,
+      name: result.feed.name,
+      url: result.feed.url,
+      status: result.status === "healthy" ? (result.itemCount ? "healthy" : "empty") : result.status,
+      count: result.itemCount,
+      checkedAt: result.fetchedAt,
+      error: result.error || null,
+      attribution: result.feed.attribution || null,
+    })),
+    ...api.map((result) => ({
+      sourceType: "api",
+      sourceId: result.source,
+      connectorId: result.connector,
+      id: result.connector,
+      name: result.name,
+      url: result.url,
+      status: result.status,
+      count: result.count,
+      checkedAt: result.retrievedAt,
+      error: result.error || null,
+      attribution: CONNECTORS[result.source]?.attribution || null,
+      metadata: result.metadata || null,
+    })),
+  ];
+  return { candidates: [...rss.items, ...api.flatMap((result) => result.data)], rss, api, sources };
 }
 
 async function handleRequest(request, env) {
@@ -98,7 +138,8 @@ async function handleRequest(request, env) {
   if (path === "/" || path === "/api") return json({ name: "FL-HL // Intelligence API", version: API_VERSION, status: "operational", mode: "normalized-ingestion", endpoints: ["/api/health", "/api/feeds", "/api/connectors", "/api/ingest/rss", "/api/ingest/api?connector=jobicy", "/api/ingest/api?connector=arbeitnow", "/api/opportunities?live=true", "/api/sources", "/api/sync/status"], dataSource: "public-rss-and-free-apis", nextLayer: "live opportunity display" });
   if (path === "/api/health") return json({ status: "healthy", apiVersion: API_VERSION, timestamp: new Date().toISOString(), storage: env?.DB ? "d1-configured" : "not-configured", ingestion: "on-demand", normalization: "enabled", deduplication: "enabled", rssFeeds: FEEDS.length, apiConnectors: Object.keys(CONNECTORS).length });
   if (path === "/api/feeds") return json({ version: API_VERSION, data: FEEDS, count: FEEDS.length });
-  if (path === "/api/connectors") return json({ version: API_VERSION, data: Object.values(CONNECTORS).map(({ id, name, url, attribution }) => ({ id, name, url, authentication: "none", attribution })), count: Object.keys(CONNECTORS).length });
+  if (path === "/api/connectors") return json({ version: API_VERSION, data: Object.values(CONNECTORS).map(({ id, name, url, attribution, type }) => ({ id, name, url, type, authentication: "none", attribution })), count: Object.keys(CONNECTORS).length });
+
 
   if (path === "/api/ingest/rss") {
     const feedId = (url.searchParams.get("feed") || "").trim(); if (feedId && !FEEDS.some((feed) => feed.id === feedId)) return json({ error: "UNKNOWN_FEED", feed: feedId }, 404);
@@ -115,7 +156,7 @@ async function handleRequest(request, env) {
     const limit = Math.min(Math.max(Number.parseInt(url.searchParams.get("limit") || "50", 10) || 50, 1), 100);
     const q = (url.searchParams.get("q") || "").trim().toLowerCase();
     const region = (url.searchParams.get("region") || "").trim().toLowerCase();
-    if (!live) return json({ data: [], count: 0, limit, query: q, region, statusCode: "READY_FOR_LIVE_DISPLAY", message: "Use live=true to acquire, normalize, and deduplicate current candidates in V2.7." });
+    if (!live) return json({ data: [], count: 0, limit, query: q, region, statusCode: "READY_FOR_LIVE_DISPLAY", message: "Use live=true to acquire, normalize, and deduplicate current candidates in V2.8." });
 
     const acquisition = await acquireAll();
     const normalized = await normalizeAndDeduplicate(acquisition.candidates);
@@ -124,7 +165,14 @@ async function handleRequest(request, env) {
       return (!q || haystack.includes(q)) && (!region || haystack.includes(region));
     }).slice(0, limit);
 
-    return json({ version: API_VERSION, stage: "normalized", data: filtered, count: filtered.length, limit, query: q, region,
+    return json({
+      version: "2.8.0",
+      stage: "normalized",
+      data: filtered,
+      count: filtered.length,
+      limit,
+      query: q,
+      region,
       pipeline: {
         rssFeedsChecked: acquisition.rss.checked,
         rssFeedsSuccessful: acquisition.rss.successful,
@@ -137,12 +185,23 @@ async function handleRequest(request, env) {
         duplicatesRemoved: normalized.duplicatesRemoved,
         staleOpportunities: normalized.staleCount,
         unknownFreshness: normalized.unknownFreshnessCount,
+        sourceHealth: acquisition.sources,
       },
       persistence: "not-enabled",
-      note: "V2.7 normalizes and deduplicates live candidates in-memory. Persistence and scheduled synchronization remain later stages.",
+      note: "Legacy V2.7 ingestion remains the acquisition adapter; V2.8 exposes canonical normalized records and live source health diagnostics.",
     });
   }
-  if (path === "/api/sources") return json({ data: [], count: 0, status: "ready", message: "Curated source persistence begins after normalization and deduplication." });
+  if (path === "/api/sources") {
+    const acquisition = await acquireAll();
+    return json({
+      version: API_VERSION,
+      data: acquisition.sources,
+      count: acquisition.sources.length,
+      status: "live",
+      persistence: "not-enabled",
+      note: "Source health is derived from the current on-demand acquisition run. This endpoint does not persist source state.",
+    });
+  }
   if (path === "/api/sync/status") return json({ status: "manual-ingestion", lastRunAt: null, lastSuccessfulRunAt: null, sourcesChecked: FEEDS.length + Object.keys(CONNECTORS).length, opportunitiesIngested: 0, opportunitiesUpdated: 0, opportunitiesRejected: 0, errorCount: 0, ingestionEnabled: true, normalizationEnabled: true, deduplicationEnabled: true, schedulerEnabled: false, persistenceEnabled: false });
   return notFound(path);
 }
