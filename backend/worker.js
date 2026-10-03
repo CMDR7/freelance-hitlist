@@ -138,7 +138,8 @@ async function handleRequest(request, env) {
   if (path === "/" || path === "/api") return json({ name: "FL-HL // Intelligence API", version: API_VERSION, status: "operational", mode: "normalized-ingestion", endpoints: ["/api/health", "/api/feeds", "/api/connectors", "/api/ingest/rss", "/api/ingest/api?connector=jobicy", "/api/ingest/api?connector=arbeitnow", "/api/opportunities?live=true", "/api/sources", "/api/sync/status"], dataSource: "public-rss-and-free-apis", nextLayer: "live opportunity display" });
   if (path === "/api/health") return json({ status: "healthy", apiVersion: API_VERSION, timestamp: new Date().toISOString(), storage: env?.DB ? "d1-configured" : "not-configured", ingestion: "on-demand", normalization: "enabled", deduplication: "enabled", rssFeeds: FEEDS.length, apiConnectors: Object.keys(CONNECTORS).length });
   if (path === "/api/feeds") return json({ version: API_VERSION, data: FEEDS, count: FEEDS.length });
-  if (path === "/api/connectors") return json({ version: API_VERSION, data: Object.values(CONNECTORS).map(({ id, name, url, attribution }) => ({ id, name, url, authentication: "none", attribution })), count: Object.keys(CONNECTORS).length });
+  if (path === "/api/connectors") return json({ version: API_VERSION, data: Object.values(CONNECTORS).map(({ id, name, url, attribution, type }) => ({ id, name, url, type, authentication: "none", attribution })), count: Object.keys(CONNECTORS).length });
+
 
   if (path === "/api/ingest/rss") {
     const feedId = (url.searchParams.get("feed") || "").trim(); if (feedId && !FEEDS.some((feed) => feed.id === feedId)) return json({ error: "UNKNOWN_FEED", feed: feedId }, 404);
@@ -182,7 +183,17 @@ async function handleRequest(request, env) {
       note: "V2.7 normalizes and deduplicates live candidates in-memory. Persistence and scheduled synchronization remain later stages.",
     });
   }
-  if (path === "/api/sources") return json({ data: [], count: 0, status: "ready", message: "Curated source persistence begins after normalization and deduplication." });
+  if (path === "/api/sources") {
+    const acquisition = await acquireAll();
+    return json({
+      version: API_VERSION,
+      data: acquisition.sources,
+      count: acquisition.sources.length,
+      status: "live",
+      persistence: "not-enabled",
+      note: "Source health is derived from the current on-demand acquisition run. This endpoint does not persist source state.",
+    });
+  }
   if (path === "/api/sync/status") return json({ status: "manual-ingestion", lastRunAt: null, lastSuccessfulRunAt: null, sourcesChecked: FEEDS.length + Object.keys(CONNECTORS).length, opportunitiesIngested: 0, opportunitiesUpdated: 0, opportunitiesRejected: 0, errorCount: 0, ingestionEnabled: true, normalizationEnabled: true, deduplicationEnabled: true, schedulerEnabled: false, persistenceEnabled: false });
   return notFound(path);
 }
