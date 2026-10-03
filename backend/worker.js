@@ -156,7 +156,7 @@ async function handleRequest(request, env) {
     const limit = Math.min(Math.max(Number.parseInt(url.searchParams.get("limit") || "50", 10) || 50, 1), 100);
     const q = (url.searchParams.get("q") || "").trim().toLowerCase();
     const region = (url.searchParams.get("region") || "").trim().toLowerCase();
-    if (!live) return json({ data: [], count: 0, limit, query: q, region, statusCode: "READY_FOR_LIVE_DISPLAY", message: "Use live=true to acquire, normalize, and deduplicate current candidates in V2.7." });
+    if (!live) return json({ data: [], count: 0, limit, query: q, region, statusCode: "READY_FOR_LIVE_DISPLAY", message: "Use live=true to acquire, normalize, and deduplicate current candidates in V2.8." });
 
     const acquisition = await acquireAll();
     const normalized = await normalizeAndDeduplicate(acquisition.candidates);
@@ -165,7 +165,14 @@ async function handleRequest(request, env) {
       return (!q || haystack.includes(q)) && (!region || haystack.includes(region));
     }).slice(0, limit);
 
-    return json({ version: API_VERSION, stage: "normalized", data: filtered, count: filtered.length, limit, query: q, region,
+    return json({
+      version: "2.8.0",
+      stage: "normalized",
+      data: filtered,
+      count: filtered.length,
+      limit,
+      query: q,
+      region,
       pipeline: {
         rssFeedsChecked: acquisition.rss.checked,
         rssFeedsSuccessful: acquisition.rss.successful,
@@ -178,9 +185,10 @@ async function handleRequest(request, env) {
         duplicatesRemoved: normalized.duplicatesRemoved,
         staleOpportunities: normalized.staleCount,
         unknownFreshness: normalized.unknownFreshnessCount,
+        sourceHealth: acquisition.sources,
       },
       persistence: "not-enabled",
-      note: "V2.7 normalizes and deduplicates live candidates in-memory. Persistence and scheduled synchronization remain later stages.",
+      note: "Legacy V2.7 ingestion remains the acquisition adapter; V2.8 exposes canonical normalized records and live source health diagnostics.",
     });
   }
   if (path === "/api/sources") {
