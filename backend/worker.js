@@ -74,15 +74,26 @@ function normalizeArbeitnow(job, retrievedAt) {
   const remote = job.remote === true || String(job.remote).toLowerCase() === "true";
   return { sourceId: "arbeitnow", sourceName: "Arbeitnow Free Job Board API", title: job.title || "Untitled opportunity", employer: job.company_name || job.company || "Unknown employer", url: job.url, engagement: asArray(job.job_types || job.job_type || job.type), location: [remote ? "Remote" : null, job.location].filter(Boolean), tags: asArray(job.tags || job.category), publishedAt: job.created_at || job.published_at || null, retrievedAt, status: "active", description: stripHtml(job.description || ""), attribution: CONNECTORS.arbeitnow.attribution, acquisition: "api", stage: "ingested-candidate" };
 }
+
 async function fetchConnector(name) {
   const connector = CONNECTORS[name]; if (!connector) throw new Error(`Unknown connector: ${name}`);
   const retrievedAt = new Date().toISOString();
-  const response = await fetch(connector.url, { headers: { Accept: "application/json", "User-Agent": "FL-HL-Intelligence-Network/2.7" } });
-  if (!response.ok) throw new Error(`${name} returned HTTP ${response.status}`);
-  const payload = await response.json(); const jobs = Array.isArray(payload.jobs) ? payload.jobs : Array.isArray(payload.data) ? payload.data : [];
-  const data = name === "jobicy" ? jobs.map((job) => normalizeJobicy(job, retrievedAt)).filter((job) => job.url) : jobs.map((job) => normalizeArbeitnow(job, retrievedAt)).filter((job) => job.url);
-  return { connector: connector.id, source: name, retrievedAt, count: data.length, stage: "ingested-candidate", data };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+  try {
+    const response = await fetch(connector.url, { headers: { Accept: "application/json", "User-Agent": "FL-HL-Intelligence-Network/2.8 (+public-api-ingestion)" }, signal: controller.signal, redirect: "follow" });
+    if (!response.ok) throw new Error(`${name} returned HTTP ${response.status}`);
+    const payload = await response.json();
+    const jobs = Array.isArray(payload.jobs) ? payload.jobs : Array.isArray(payload.data) ? payload.data : [];
+    const data = name === "jobicy"
+      ? jobs.map((job) => normalizeJobicy(job, retrievedAt)).filter((job) => job.url)
+      : jobs.map((job) => normalizeArbeitnow(job, retrievedAt)).filter((job) => job.url);
+    return { connector: connector.id, source: name, name: connector.name, url: connector.url, type: connector.type, retrievedAt, status: data.length ? "healthy" : "empty", count: data.length, stage: "ingested-candidate", data, error: null, metadata: name === "jobicy" ? { nextCursor: payload.nextCursor ?? null, hasMore: payload.hasMore ?? false, apiVersion: payload.apiVersion ?? null } : null };
+  } catch (error) {
+    return { connector: connector.id, source: name, name: connector.name, url: connector.url, type: connector.type, retrievedAt, status: error?.name === "AbortError" ? "timeout" : "degraded", count: 0, stage: "ingested-candidate", data: [], error: error?.name === "AbortError" ? "Request timed out" : String(error?.message || error), metadata: null };
+  } finally { clearTimeout(timeout); }
 }
+
 async function acquireAll() {
   const rss = await ingestFeeds();
   const apiResults = await Promise.allSettled(Object.keys(CONNECTORS).map(fetchConnector));
