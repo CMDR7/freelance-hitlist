@@ -96,9 +96,38 @@ async function fetchConnector(name) {
 
 async function acquireAll() {
   const rss = await ingestFeeds();
-  const apiResults = await Promise.allSettled(Object.keys(CONNECTORS).map(fetchConnector));
-  const api = apiResults.map((result, index) => result.status === "fulfilled" ? result.value : { connector: CONNECTORS[Object.keys(CONNECTORS)[index]].id, source: Object.keys(CONNECTORS)[index], retrievedAt: new Date().toISOString(), count: 0, stage: "ingested-candidate", data: [], error: String(result.reason?.message || result.reason) });
-  return { candidates: [...rss.items, ...api.flatMap((result) => result.data)], rss, api };
+  const apiResults = await Promise.all(Object.keys(CONNECTORS).map(fetchConnector));
+  const api = apiResults;
+  const sources = [
+    ...rss.results.map((result) => ({
+      sourceType: "rss",
+      sourceId: result.feed.sourceId,
+      feedId: result.feed.id,
+      id: result.feed.id,
+      name: result.feed.name,
+      url: result.feed.url,
+      status: result.status === "healthy" ? (result.itemCount ? "healthy" : "empty") : result.status,
+      count: result.itemCount,
+      checkedAt: result.fetchedAt,
+      error: result.error || null,
+      attribution: result.feed.attribution || null,
+    })),
+    ...api.map((result) => ({
+      sourceType: "api",
+      sourceId: result.source,
+      connectorId: result.connector,
+      id: result.connector,
+      name: result.name,
+      url: result.url,
+      status: result.status,
+      count: result.count,
+      checkedAt: result.retrievedAt,
+      error: result.error || null,
+      attribution: CONNECTORS[result.source]?.attribution || null,
+      metadata: result.metadata || null,
+    })),
+  ];
+  return { candidates: [...rss.items, ...api.flatMap((result) => result.data)], rss, api, sources };
 }
 
 async function handleRequest(request, env) {
