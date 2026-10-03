@@ -7,7 +7,7 @@ const CORS_HEADERS = {
   "Cache-Control": "no-store",
 };
 
-const API_VERSION = "2.7.0";
+const API_VERSION = "2.8.0";
 
 const FEEDS = [
   { id: "remote-first-jobs-ai", sourceId: "remote-first-jobs", type: "rss", name: "Remote First Jobs // AI", url: "https://remotefirstjobs.com/rss/jobs/ai.rss", enabled: true, attribution: { required: true, label: "Source: Remote First Jobs", url: "https://remotefirstjobs.com/" } },
@@ -57,7 +57,7 @@ function parseFeed(xml, feed) {
 async function fetchFeed(feed) {
   const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 10000);
   try {
-    const response = await fetch(feed.url, { headers: { "User-Agent": "FL-HL-Intelligence-Network/2.7 (+public-feed-ingestion)", Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.1" }, signal: controller.signal, redirect: "follow" });
+    const response = await fetch(feed.url, { headers: { "User-Agent": "FL-HL-Intelligence-Network/2.8 (+public-feed-ingestion)", Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.1" }, signal: controller.signal, redirect: "follow" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const xml = await response.text(); if (!/<(?:rss|feed|rdf:RDF)\b/i.test(xml)) throw new Error("Response does not appear to be an RSS/Atom/XML feed");
     const items = parseFeed(xml, feed);
