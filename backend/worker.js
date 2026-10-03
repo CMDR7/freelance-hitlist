@@ -19,12 +19,14 @@ const FEEDS = [
 const CONNECTORS = {
   jobicy: {
     id: "jobicy-public-api",
+    type: "api",
     name: "Jobicy Public Jobs API",
     url: "https://jobicy.com/api/v2/remote-jobs?count=100&tag=ai",
     attribution: { required: true, label: "Source: Jobicy", url: "https://jobicy.com/" },
   },
   arbeitnow: {
     id: "arbeitnow-public-api",
+    type: "api",
     name: "Arbeitnow Free Job Board API",
     url: "https://www.arbeitnow.com/api/job-board-api",
     attribution: { required: false, label: "Source: Arbeitnow", url: "https://www.arbeitnow.com/" },
