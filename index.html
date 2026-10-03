@@ -1,12 +1,144 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#05060a">
-<title>Freelancer // Intelligence Network</title>
+<title>Freelancer Intelligence Network | Remote IT & AI Freelance Opportunities</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#05060a;--panel:rgba(13,17,28,.84);--panel2:rgba(19,24,39,.72);--mag:#ff3366;--cyan:#33ffd9;--amber:#ffd633;--blue:#5b8dff;--text:#f5f5f7;--muted:#8b8fa3;--line:rgba(255,255,255,.08);--r:10px}*{box-sizing:border-box;margin:0;padding:0}body{background:radial-gradient(circle at 15% -10%,rgba(255,51,102,.08),transparent 30%),#05060a;color:var(--text);font-family:Rajdhani,sans-serif;overflow-x:hidden}.app{width:min(100% - 32px,1600px);margin:auto;padding:28px 0 48px}.glass{background:var(--panel);border:1px solid var(--line);box-shadow:0 18px 60px rgba(0,0,0,.34);backdrop-filter:blur(16px)}.header,.command,.matrix{border-radius:var(--r);margin-bottom:16px}.header{display:flex;justify-content:space-between;gap:20px;padding:24px}.kicker,.metric-label,h2{color:var(--cyan);font-size:.68rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase}h1{margin:5px 0 8px;color:var(--mag);font-size:clamp(1.6rem,3vw,2.7rem);line-height:1;letter-spacing:.08em;text-transform:uppercase}.subtitle,.meta,.source-meta{color:var(--muted);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase}.system-state{text-align:right}.online{color:var(--cyan);font-weight:700;font-size:.8rem;letter-spacing:.1em;margin-bottom:5px}.author-credit{position:relative;display:inline-block;margin-top:2px;padding:6px 12px;border-radius:8px;background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.035));border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.10),inset 0 -1px 0 rgba(0,0,0,.28),0 8px 24px rgba(0,0,0,.18);color:#9b9eaa;font:500 .92rem/1.1 Rajdhani,sans-serif;letter-spacing:.09em;text-shadow:0 0 8px rgba(180,184,196,.42),0 0 18px rgba(160,165,176,.16);overflow:hidden;isolation:isolate}.author-credit:before,.author-credit:after{content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen}.author-credit:before{background:linear-gradient(120deg,transparent 0 35%,rgba(255,255,255,.12) 44%,transparent 54%);transform:translateX(-120%);animation:authorSweep 7.4s linear infinite}.author-credit:after{background:repeating-linear-gradient(180deg,transparent 0 5px,rgba(255,255,255,.07) 6px,transparent 7px);opacity:.45;z-index:1}.author-credit .glitch-text{position:relative;z-index:2;display:inline-block}.author-credit.glitch .glitch-text{animation:creditGlitch .34s steps(2,end) both}.author-credit.glitch{animation:panelGlitch .34s steps(2,end) both}@keyframes authorSweep{0%,80%,100%{transform:translateX(-120%)}85%{transform:translateX(120%)}}@keyframes creditGlitch{0%{transform:none;text-shadow:0 0 8px rgba(180,184,196,.42)}20%{transform:translate(-2px,1px);text-shadow:-2px 0 #ff3366,2px 0 #33ffd9}45%{transform:translate(2px,-1px);text-shadow:2px 0 #ff3366,-2px 0 #33ffd9}70%{transform:translate(-1px,0)}100%{transform:none;text-shadow:0 0 8px rgba(180,184,196,.42)}}@keyframes panelGlitch{0%{filter:none}30%{filter:brightness(1.18)}52%{filter:contrast(1.16)}100%{filter:none}}
 .command{padding:18px}.command-head,.matrix-head,.active-head,.explorer-top{display:flex;justify-content:space-between;align-items:center;gap:12px}.section-title{font-size:1.05rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}.search{display:flex;gap:10px;align-items:center;margin:14px 0 10px;padding:0 14px;border:1px solid var(--line);border-radius:7px;background:#070911}.search input{width:100%;padding:13px 0;border:0;background:transparent;color:var(--text);outline:0;font:600 1rem Rajdhani}.filters,.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.filter label{display:block;color:var(--muted);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px}.filter select{width:100%;padding:10px;border:1px solid var(--line);border-radius:6px;background:#070911;color:var(--text);font:600 .82rem Rajdhani}.metrics{gap:12px;margin-bottom:16px}.metric{padding:16px 18px;border-radius:var(--r)}.metric-value{font-size:2rem;font-weight:700;line-height:1;margin:7px 0}.metric-sub{color:var(--muted);font-size:.65rem;text-transform:uppercase}.matrix{overflow:hidden}.matrix-head{padding:16px 18px;border-bottom:1px solid var(--line)}.actions,.tabs,.intel-actions{display:flex;gap:7px;flex-wrap:wrap}.btn,.tab{padding:8px 11px;border:1px solid rgba(255,255,255,.15);border-radius:5px;background:rgba(255,255,255,.04);color:var(--text);font:700 .67rem Rajdhani;text-transform:uppercase;letter-spacing:.08em;cursor:pointer}.btn:hover,.tab:hover,.tab.active{border-color:var(--cyan);color:var(--cyan);background:rgba(51,255,217,.08)}.btn-mag{border-color:var(--mag);color:var(--mag)}.telemetry{display:grid;grid-template-columns:1.15fr 1fr;gap:12px;padding:12px}.card{padding:14px;border:1px solid var(--line);border-radius:8px;background:rgba(5,6,10,.38)}.telemetry-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.telemetry-item{padding:9px;border:1px solid var(--line);border-radius:6px}.telemetry-item b{display:block;font-size:1.05rem}.telemetry-item span{color:var(--muted);font-size:.58rem;text-transform:uppercase}.source-list{display:grid;gap:6px;margin-top:10px;max-height:250px;overflow:auto}.source-row{width:100%;display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;text-align:left;padding:9px 10px;border:1px solid var(--line);border-radius:7px;background:rgba(5,6,10,.35);color:var(--text);cursor:pointer}.source-row:hover,.source-row.active{border-color:rgba(51,255,217,.55);background:rgba(51,255,217,.06)}.source-dot{width:7px;height:7px;border-radius:50%;background:var(--cyan)}.source-row.api .source-dot{background:var(--blue)}.source-row strong{font-size:.8rem}.source-row small{display:block;color:var(--muted);font-size:.6rem;text-transform:uppercase}.source-row b{font-size:.78rem}.active-context{margin:0 12px 12px;padding:12px 14px;border:1px solid rgba(51,255,217,.18);border-radius:8px;background:rgba(51,255,217,.035)}.active-title{font-weight:700;font-size:1rem}.context-stats{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:.68rem;text-transform:uppercase;margin-top:4px}.table-wrap{overflow:auto}table{width:100%;min-width:1020px;border-collapse:collapse}th{padding:12px 14px;background:var(--panel2);color:var(--muted);font-size:.62rem;text-align:left;text-transform:uppercase;letter-spacing:.1em}td{padding:14px;border-bottom:1px solid var(--line);vertical-align:top;font-size:.86rem}.source-name{font-weight:700}.tagline{display:block;color:var(--muted);font-size:.66rem;margin-top:2px}.role-link{color:var(--cyan);font-weight:600;text-decoration:none}.pill{display:inline-block;margin:0 4px 4px 0;padding:3px 7px;border-radius:4px;font-size:.6rem;text-transform:uppercase}.pill-type{color:var(--mag);background:rgba(255,51,102,.12)}.pill-region{color:var(--muted);background:rgba(255,255,255,.05)}.status{font-size:.68rem;font-weight:700;text-transform:uppercase}.open{color:var(--cyan)}.onboarding{color:var(--amber)}.portal{color:var(--blue)}.notes{max-width:390px;max-height:118px;overflow:auto;padding:10px;border:1px solid var(--line);color:#c5cad6;line-height:1.45}.empty{padding:28px;text-align:center;color:var(--muted);text-transform:uppercase;font-size:.78rem}.modal{display:none;position:fixed;inset:0;z-index:20;padding:18px;align-items:center;justify-content:center;background:rgba(0,0,0,.74);backdrop-filter:blur(10px)}.modal.active{display:flex}.modal-box{width:min(100%,460px);max-height:90vh;overflow:auto;padding:22px;border:1px solid rgba(51,255,217,.25);border-radius:10px;background:#101521}.modal-head{display:flex;justify-content:space-between;gap:12px}.close{border:0;background:none;color:var(--muted);font-size:1.6rem;cursor:pointer}.modal-title{color:var(--mag);font-size:1.2rem;text-transform:uppercase;letter-spacing:.1em}.social{display:flex;justify-content:space-between;color:var(--text);text-decoration:none;padding:13px;border:1px solid var(--line);margin-top:9px;border-radius:6px;font-weight:600;text-transform:uppercase;font-size:.78rem}.social:hover{border-color:var(--cyan);background:rgba(51,255,217,.06)}.detail-copy{color:#d9dce4;line-height:1.68}.detail-copy p{margin:0 0 12px}.detail-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:14px 0}.detail-meta div{padding:10px;border:1px solid var(--line);border-radius:7px}.detail-meta span{display:block;color:var(--muted);font-size:.6rem;text-transform:uppercase}.json{max-height:240px;overflow:auto;background:#03040a;padding:12px;border-radius:7px;font:12px/1.5 monospace}.footer{text-align:center;margin-top:26px;color:var(--muted);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase}@media(max-width:1050px){.telemetry{grid-template-columns:1fr}.filters,.metrics{grid-template-columns:repeat(2,1fr)}}@media(max-width:700px){.app{width:min(100% - 18px,1600px);padding-top:10px}.header{flex-direction:column}.system-state{text-align:left}.author-credit{font-size:.82rem;padding:5px 10px}.metrics,.filters{grid-template-columns:1fr 1fr}.matrix-head,.active-head{align-items:flex-start;flex-direction:column}.telemetry-grid{grid-template-columns:repeat(2,1fr)}table,thead,tbody,tr,th,td{display:block}table{min-width:0}thead{position:absolute;clip:rect(0,0,0,0)}tbody tr{margin:10px;border:1px solid var(--line);border-radius:8px;padding:10px}td{border:0;padding:5px 0}.notes{max-width:none}}@media(prefers-reduced-motion:reduce){.author-credit,.author-credit:before,.author-credit:after{animation:none!important}}
-</style></head><body><main class="app">
+
+</style>
+<!-- Freelancer // Intelligence Network: production SEO / AEO / E-E-A-T layer -->
+<meta name="description" content="Freelancer Intelligence Network is a live proof-of-concept web application by Art__ii that aggregates public remote IT and AI freelance opportunities through RSS feeds and public APIs, normalizes and deduplicates records, preserves source attribution, and presents searchable opportunity intelligence worldwide.">
+<link rel="canonical" href="https://cmdr7.github.io/freelance-hitlist/">
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+<meta name="author" content="Art__ii">
+<meta name="application-name" content="Freelancer // Intelligence Network">
+<meta name="keywords" content="remote IT jobs, AI freelance jobs, AI trainer jobs, freelance opportunities, remote work, AI training, prompt engineering, web development, API integration">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://cmdr7.github.io/freelance-hitlist/">
+<meta property="og:title" content="Freelancer Intelligence Network | Remote IT & AI Freelance Opportunities">
+<meta property="og:description" content="A live proof-of-concept opportunity intelligence system by Art__ii, aggregating public RSS and API sources for remote IT and AI freelance discovery.">
+<meta property="og:image" content="https://cmdr7.github.io/freelance-hitlist/assets/freelancer-intelligence-network-logo.webp">
+<meta property="og:image:alt" content="Freelancer Intelligence Network logo">
+<meta property="og:site_name" content="Multistop_Tech">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Freelancer Intelligence Network | Remote IT & AI Freelance Opportunities">
+<meta name="twitter:description" content="Live source-attributed opportunity intelligence for remote IT and AI freelance work, built by Art__ii.">
+<meta name="twitter:image" content="https://cmdr7.github.io/freelance-hitlist/assets/freelancer-intelligence-network-logo.webp">
+<meta name="twitter:image:alt" content="Freelancer Intelligence Network logo">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://cmdr7.github.io/freelance-hitlist/#website",
+      "url": "https://cmdr7.github.io/freelance-hitlist/",
+      "name": "Freelancer // Intelligence Network",
+      "description": "A live proof-of-concept freelance intelligence web application that aggregates public remote-work opportunities from RSS feeds and public APIs, normalizes incoming payloads, removes duplicates, and presents source-attributed opportunity intelligence.",
+      "inLanguage": "en",
+      "publisher": { "@id": "https://cmdr7.github.io/freelance-hitlist/#organization" }
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://cmdr7.github.io/freelance-hitlist/#webpage",
+      "url": "https://cmdr7.github.io/freelance-hitlist/",
+      "name": "Freelancer // Intelligence Network",
+      "description": "Live freelance and IT opportunity intelligence for remote workers, employers, AI freelancers, and entrepreneurs, built as a functional front-end and backend proof of concept by Art__ii.",
+      "isPartOf": { "@id": "https://cmdr7.github.io/freelance-hitlist/#website" },
+      "mainEntity": { "@id": "https://cmdr7.github.io/freelance-hitlist/#application" },
+      "about": [
+        { "@id": "https://cmdr7.github.io/freelance-hitlist/#person" },
+        { "@id": "https://cmdr7.github.io/freelance-hitlist/#organization" },
+        { "@id": "https://cmdr7.github.io/freelance-hitlist/#dataset" }
+      ],
+      "primaryImageOfPage": { "@id": "https://cmdr7.github.io/freelance-hitlist/#logo" },
+      "dateModified": "2026-10-03"
+    },
+    {
+      "@type": "WebApplication",
+      "@id": "https://cmdr7.github.io/freelance-hitlist/#application",
+      "url": "https://cmdr7.github.io/freelance-hitlist/",
+      "name": "Freelancer // Intelligence Network",
+      "alternateName": "FL-HL",
+      "description": "A live proof-of-concept web application demonstrating Art__ii’s ability to design and connect a functional front end and backend, ingest auto-updating opportunity payloads from public data providers, normalize and deduplicate records, preserve source attribution, and expose intelligence through an interactive interface.",
+      "applicationCategory": "BusinessApplication",
+      "applicationSubCategory": "Freelance job intelligence and opportunity aggregation",
+      "operatingSystem": "Any",
+      "browserRequirements": "Modern web browser with JavaScript enabled",
+      "countriesSupported": "Worldwide",
+      "featureList": ["Remote IT job discovery","AI freelance opportunity discovery","RSS feed ingestion","Public API ingestion","Payload normalization","Duplicate detection and removal","Source attribution and provenance","Freshness and retrieval metadata","Search, filtering and sorting","Source explorer and pipeline telemetry"],
+      "creator": { "@id": "https://cmdr7.github.io/freelance-hitlist/#person" },
+      "author": { "@id": "https://cmdr7.github.io/freelance-hitlist/#person" },
+      "maintainer": { "@id": "https://cmdr7.github.io/freelance-hitlist/#person" },
+      "provider": { "@id": "https://cmdr7.github.io/freelance-hitlist/#organization" },
+      "image": { "@id": "https://cmdr7.github.io/freelance-hitlist/#logo" },
+      "audience": { "@id": "https://cmdr7.github.io/freelance-hitlist/#audience" },
+      "isBasedOn": [
+        { "@type": "WebSite", "url": "https://remotefirstjobs.com/" },
+        { "@type": "WebSite", "url": "https://jobicy.com/" },
+        { "@type": "WebSite", "url": "https://remoteyeah.com/" },
+        { "@type": "WebSite", "url": "https://weworkremotely.com/" }
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://cmdr7.github.io/freelance-hitlist/#person",
+      "name": "Art__ii",
+      "alternateName": "Art__",
+      "url": "https://cmdr7.github.io/about-me-art__/",
+      "jobTitle": "Freelancer AI Trainer, Agentic/Prompt Engineer and Web Developer",
+      "description": "AI freelancer and technical creator focused on AI training, agentic and prompt engineering, secure backend-connected websites, front-end development, API integration, and practical web systems for small entrepreneurs.",
+      "worksFor": { "@type": "Organization", "name": "Mindrift" },
+      "knowsAbout": ["AI training","AI model evaluation","agentic AI","prompt engineering","agentic prompt engineering","front-end development","secure backend development","API integration","web design","web development","SEO","GEO","AEO","remote freelance work","data annotation"],
+      "sameAs": ["https://www.linkedin.com/in/arthurrambojr","https://multistoptech.substack.com/about","https://github.com/CMDR7"]
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://cmdr7.github.io/freelance-hitlist/#organization",
+      "name": "Multistop_Tech",
+      "alternateName": "Multistop Tech",
+      "description": "Technology and digital creation identity associated with Art__ii and the development of practical web, AI, and digital systems.",
+      "url": "https://multistoptech.substack.com/about",
+      "logo": { "@id": "https://cmdr7.github.io/freelance-hitlist/#logo" },
+      "founder": { "@id": "https://cmdr7.github.io/freelance-hitlist/#person" },
+      "sameAs": ["https://multistoptech.substack.com/about"]
+    },
+    {
+      "@type": "ImageObject",
+      "@id": "https://cmdr7.github.io/freelance-hitlist/#logo",
+      "url": "https://cmdr7.github.io/freelance-hitlist/assets/freelancer-intelligence-network-logo.webp",
+      "contentUrl": "https://cmdr7.github.io/freelance-hitlist/assets/freelancer-intelligence-network-logo.webp",
+      "caption": "Freelancer // Intelligence Network logo created for the Multistop Tech project",
+      "representativeOfPage": true,
+      "encodingFormat": "image/webp",
+      "width": 256,
+      "height": 384
+    },
+    {
+      "@type": "Dataset",
+      "@id": "https://cmdr7.github.io/freelance-hitlist/#dataset",
+      "name": "Freelancer // Intelligence Network Opportunity Dataset",
+      "description": "An ongoing, source-attributed aggregation of remote and IT freelance opportunity records received from public RSS feeds and public APIs. Records are normalized and deduplicated in the application pipeline; freshness reflects the payloads received from source providers.",
+      "creator": { "@id": "https://cmdr7.github.io/freelance-hitlist/#person" },
+      "maintainer": { "@id": "https://cmdr7.github.io/freelance-hitlist/#person" },
+      "publisher": { "@id": "https://cmdr7.github.io/freelance-hitlist/#organization" },
+      "keywords": ["remote IT jobs","AI freelance jobs","AI trainer jobs","remote work","freelance opportunities","job aggregation","opportunity intelligence","RSS feeds","public APIs","data normalization","source attribution"],
+      "spatialCoverage": "Worldwide",
+      "isBasedOn": ["https://remotefirstjobs.com/","https://jobicy.com/","https://remoteyeah.com/","https://weworkremotely.com/","https://arbeitnow.com/"]
+    },
+    {
+      "@type": "Audience",
+      "@id": "https://cmdr7.github.io/freelance-hitlist/#audience",
+      "name": "Freelancer Intelligence Network Audience",
+      "audienceType": ["Employers","Remote workers seeking opportunities","AI freelancers","IT freelancers","Entrepreneurs seeking affordable web presence","People interested in IT freelance work"],
+      "geographicArea": { "@type": "Place", "name": "Worldwide" }
+    }
+  ]
+}</script></head><body><main class="app">
 <header class="header glass"><div><div class="kicker">FL-HL // NETWORK v2.8</div><h1>Freelancer // Intelligence Network</h1><div class="author-credit" id="authorCredit" aria-label="Created by Art__ii for Multistop 2026"><span class="glitch-text">Created by Art__ii for Multistop 2026</span></div><div class="subtitle">AI Workforce Signal Acquisition System</div></div><div class="system-state"><div class="online">● SYSTEM ONLINE</div><div class="meta">SIGNALS: <span id="headerCount">0</span></div><div class="meta" id="liveState">LIVE LINK // STANDBY</div></div></header>
 <section class="command glass"><div class="command-head"><div class="section-title">Search Command Center</div><div class="meta">QUERY // FILTER // ACQUIRE</div></div><div class="search">⌕ <input id="searchInput" type="search" placeholder="Search company, role, skill or capability..."></div><div class="filters"><div class="filter"><label>Access Protocol</label><select id="statusFilter"><option value="all">All Statuses</option><option value="open">Direct Access</option><option value="onboarding">Direct Landing</option><option value="portal">Login Required</option></select></div><div class="filter"><label>Work Sector</label><select id="typeFilter"><option value="all">All Types</option><option value="AI Training">AI Training</option><option value="Contract">Contract</option><option value="Freelance">Freelance</option></select></div><div class="filter"><label>Region</label><select id="regionFilter"><option value="all">All Regions</option><option value="Global">Global</option><option value="Remote">Remote</option></select></div><div class="filter"><label>Sort Matrix</label><select id="sortFilter"><option value="default">Default Order</option><option value="newest">Newest Retrieved</option><option value="published">Newest Published</option><option value="company">Employer</option><option value="source">Source</option></select></div></div></section>
 <section class="metrics"><article class="metric glass"><div class="metric-label">Signals / Records</div><div class="metric-value" id="metricRecords">0</div><div class="metric-sub">Active View</div></article><article class="metric glass"><div class="metric-label">Direct Access</div><div class="metric-value" id="metricOpen">0</div><div class="metric-sub">Open Paths</div></article><article class="metric glass"><div class="metric-label">AI Training</div><div class="metric-value" id="metricTraining">0</div><div class="metric-sub">Training / Eval</div></article><article class="metric glass"><div class="metric-label">Sources</div><div class="metric-value" id="metricSourceCount">0</div><div class="metric-sub">Configured / Active</div></article></section>

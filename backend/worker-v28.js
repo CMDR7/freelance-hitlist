@@ -1,4 +1,5 @@
 import legacyWorker from "./worker.js";
+import { normalizeAndDeduplicate } from "./normalize.js";
 
 const FEEDS = [
   "remote-first-jobs-ai",
@@ -18,17 +19,6 @@ function json(data, status = 200) {
       "Cache-Control": "no-store",
     },
   });
-}
-
-function candidateKey(item) {
-  try {
-    const url = new URL(item.url || item.link || "");
-    url.hash = "";
-    ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "utm_id", "gclid", "fbclid", "ref", "source"].forEach((key) => url.searchParams.delete(key));
-    return url.toString();
-  } catch {
-    return `${item.sourceId || item.sourceName || "unknown"}|${item.title || "untitled"}`;
-  }
 }
 
 function matches(item, query, region) {
@@ -58,7 +48,7 @@ async function invokeLegacy(request, env, ctx, path) {
   return response.json();
 }
 
-async function acquireSourceBalanced(request, env, ctx, limit, query, region) {
+async function acquireSources(request, env, ctx, query, region) {
   const specs = [
     ...FEEDS.map((id) => ({ id, kind: "rss", path: `/api/ingest/rss?feed=${encodeURIComponent(id)}` })),
     ...CONNECTORS.map((id) => ({ id, kind: "api", path: `/api/ingest/api?connector=${encodeURIComponent(id)}` })),
@@ -67,38 +57,67 @@ async function acquireSourceBalanced(request, env, ctx, limit, query, region) {
   const settled = await Promise.allSettled(specs.map(async (spec) => {
     const payload = await invokeLegacy(request, env, ctx, spec.path);
     const data = Array.isArray(payload.data) ? payload.data : [];
-    return { ...spec, data: data.filter((item) => matches(item, query, region)), rawCount: data.length };
+    return {
+      ...spec,
+      data: data.filter((item) => matches(item, query, region)),
+      rawCount: data.length,
+    };
   }));
 
   const sources = settled.map((result, index) => {
     const spec = specs[index];
     if (result.status === "fulfilled") return { ...result.value, error: null };
-    return { ...spec, data: [], rawCount: 0, error: String(result.reason?.message || result.reason) };
+    return {
+      ...spec,
+      data: [],
+      rawCount: 0,
+      error: String(result.reason?.message || result.reason),
+    };
   });
 
-  // Round-robin selection prevents a large source from consuming the response limit.
-  const positions = new Array(sources.length).fill(0);
+  const candidates = sources.flatMap((source) => source.data.map((item) => ({
+    ...item,
+    acquisition: item.acquisition || source.kind,
+    sourceId: item.sourceId || source.id,
+    sourceName: item.sourceName || source.id,
+  })));
+
+  return { candidates, sources };
+}
+
+function sourceType(item) {
+  return Array.isArray(item.acquisition)
+    ? item.acquisition.includes("api") && !item.acquisition.includes("rss") ? "api" : "rss"
+    : String(item.acquisition || "").toLowerCase() === "api" ? "api" : "rss";
+}
+
+function sourceBalance(data) {
+  const groups = new Map();
+  for (const item of data) {
+    const key = `${sourceType(item)}:${item.sourceId}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(item);
+  }
+
+  const orderedGroups = [...groups.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, items]) => items);
+
+  const positions = new Array(orderedGroups.length).fill(0);
   const selected = [];
-  const seen = new Set();
   let progressed = true;
 
-  while (selected.length < limit && progressed) {
+  while (progressed) {
     progressed = false;
-    for (let i = 0; i < sources.length && selected.length < limit; i += 1) {
-      const source = sources[i];
-      while (positions[i] < source.data.length) {
-        const item = source.data[positions[i]++];
-        progressed = true;
-        const key = candidateKey(item);
-        if (seen.has(key)) continue;
-        seen.add(key);
-        selected.push(item);
-        break;
-      }
+    for (let i = 0; i < orderedGroups.length; i += 1) {
+      if (positions[i] >= orderedGroups[i].length) continue;
+      selected.push(orderedGroups[i][positions[i]]);
+      positions[i] += 1;
+      progressed = true;
     }
   }
 
-  return { selected, sources };
+  return selected;
 }
 
 async function handle(request, env, ctx) {
@@ -115,18 +134,21 @@ async function handle(request, env, ctx) {
   const limit = Math.min(Math.max(Number.parseInt(url.searchParams.get("limit") || "50", 10) || 50, 1), 100);
   const query = (url.searchParams.get("q") || "").trim().toLowerCase();
   const region = (url.searchParams.get("region") || "").trim().toLowerCase();
-  const acquisition = await acquireSourceBalanced(request, env, ctx, limit, query, region);
+
+  const acquisition = await acquireSources(request, env, ctx, query, region);
+  const normalized = await normalizeAndDeduplicate(acquisition.candidates);
+  const balanced = sourceBalance(normalized.data);
+  const selected = balanced.slice(0, limit);
 
   const rssSources = acquisition.sources.filter((source) => source.kind === "rss");
   const apiSources = acquisition.sources.filter((source) => source.kind === "api");
   const failed = acquisition.sources.filter((source) => source.error);
-  const candidatesAcquired = acquisition.sources.reduce((total, source) => total + source.rawCount, 0);
 
   return json({
     version: "2.8.0",
-    stage: "source-balanced-live-display",
-    data: acquisition.selected,
-    count: acquisition.selected.length,
+    stage: "normalized-source-balanced-live-display",
+    data: selected,
+    count: selected.length,
     limit,
     query,
     region,
@@ -135,18 +157,19 @@ async function handle(request, env, ctx) {
       rssFeedsSuccessful: rssSources.filter((source) => !source.error).length,
       apiConnectorsChecked: apiSources.length,
       apiConnectorsSuccessful: apiSources.filter((source) => !source.error).length,
-      candidatesAcquired,
-      candidatesNormalized: acquisition.selected.length,
-      candidatesRejected: 0,
-      uniqueOpportunities: acquisition.selected.length,
-      duplicatesRemoved: Math.max(0, candidatesAcquired - acquisition.selected.length),
-      staleOpportunities: 0,
-      unknownFreshness: 0,
+      candidatesAcquired: normalized.inputCount,
+      candidatesNormalized: normalized.normalizedCount,
+      candidatesRejected: normalized.rejectedCount,
+      uniqueOpportunities: normalized.uniqueCount,
+      duplicatesRemoved: normalized.duplicatesRemoved,
+      staleOpportunities: normalized.staleCount,
+      unknownFreshness: normalized.unknownFreshnessCount,
+      returnedAfterLimit: selected.length,
       sourceBalanced: true,
       failedSources: failed.map((source) => ({ id: source.id, error: source.error })),
     },
     persistence: "not-enabled",
-    note: "V2.8 selects live opportunities in source-balanced round-robin order before applying the response limit, preventing a single high-volume source from monopolizing the display.",
+    note: "V2.8 acquires live candidates, runs the canonical normalization and deduplication pipeline, then source-balances normalized records before applying the response limit.",
   });
 }
 
