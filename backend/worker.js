@@ -21,7 +21,7 @@ const CONNECTORS = {
     id: "jobicy-public-api",
     type: "api",
     name: "Jobicy Public Jobs API",
-    url: "https://jobicy.com/api/v2/remote-jobs?count=100&tag=ai",
+    url: "https://jobicy.com/api/v2/remote-jobs?count=100&industry=data-science",
     attribution: { required: true, label: "Source: Jobicy", url: "https://jobicy.com/" },
   },
   arbeitnow: {
