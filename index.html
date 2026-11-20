@@ -160,7 +160,50 @@ function sourceGroups(){const m=new Map();configuredSources.forEach(s=>{const ke
 function updateActive(context){const all=!activeSourceId,record=liveResults.find(j=>j.sourceId===activeSourceId)||configuredSources.find(s=>s.id===activeSourceId);$('activeTitle').textContent=all?(sourceMode==='all'?'All Intelligence':sourceMode==='rss'?'All RSS Intelligence':'All API Intelligence'):(record?.name||record?.sourceName||'Selected Source');$('activeType').textContent=all?(sourceMode==='all'?'ALL SOURCES':sourceMode==='rss'?'RSS FEEDS':'API SOURCES'):(record?.type==='api'?'API SOURCE':'RSS FEED');$('activeCount').textContent=`${context.length} opportunit${context.length===1?'y':'ies'}`;$('activeStatus').textContent=context.length?'ACTIVE':'CONFIGURED / NO CURRENT RECORDS';$('clearSourceBtn').hidden=!activeSourceId}
 function telemetry(p){const x=p?.pipeline||{};$('tRss').textContent=`${x.rssFeedsSuccessful??0}/${x.rssFeedsChecked??0}`;$('tApi').textContent=`${x.apiConnectorsSuccessful??0}/${x.apiConnectorsChecked??0}`;$('tAcquired').textContent=x.candidatesAcquired??'—';$('tUnique').textContent=x.uniqueOpportunities??'—';$('tDuplicates').textContent=x.duplicatesRemoved??'—';$('tStale').textContent=x.staleOpportunities??'—';$('tUnknown').textContent=x.unknownFreshness??'—';$('tMode').textContent=p?.stage||'LIVE'}
 async function loadSources(){try{const [feedsResp,connectorsResp,sourcesResp]=await Promise.all([fetch(API+'/api/feeds',{headers:{Accept:'application/json'}}),fetch(API+'/api/connectors',{headers:{Accept:'application/json'}}),fetch(API+'/api/sources',{headers:{Accept:'application/json'}})]);if(!feedsResp.ok||!connectorsResp.ok||!sourcesResp.ok)throw Error('Source registry unavailable');const feeds=await feedsResp.json(),connectors=await connectorsResp.json(),sources=await sourcesResp.json();configuredSources=[...(feeds.data||[]).filter(x=>x.enabled!==false).map(x=>({id:x.sourceId||x.id,name:x.name,type:'rss',feedId:x.id})),...(connectors.data||[]).map(x=>({id:String(x.id).replace(/-public-api$/,''),name:x.name,type:'api',connectorId:x.id}))];sourceHealth=sources.data||[];renderSources();render()}catch(e){console.warn('[FL-HL] source registry unavailable',e)}}
-async function loadLive(){const p=new URLSearchParams({live:'true',limit:'100'});$('liveState').textContent='LIVE LINK // ACQUIRING';try{const r=await fetch(`${API}/api/opportunities?${p}`,{headers:{Accept:'application/json'}});if(!r.ok)throw Error(`HTTP ${r.status}`);livePayload=await r.json();if(!Array.isArray(livePayload.data))throw Error('Unexpected API response');liveResults=livePayload.data.map(norm);$('liveState').textContent=`LIVE LINK // ${liveResults.length} SIGNALS ACTIVE`;telemetry(livePayload);render()}catch(e){console.error(e);liveResults=[];$('liveState').textContent='LIVE LINK // DEGRADED';render()}}
+async function loadLive(){
+  const base={live:'true',limit:'100'};
+  const seen=new Map(),seenCursors=new Set();
+  let cursor=null,firstPayload=null,snapshotRunId=null,hasMore=false;
+  $('liveState').textContent='LIVE LINK // ACQUIRING';
+  liveResults=[];livePayload=null;
+  try{
+    do{
+      const p=new URLSearchParams(base);
+      if(cursor)p.set('cursor',cursor);
+      const r=await fetch(`${API}/api/opportunities?${p}`,{headers:{Accept:'application/json'}});
+      if(!r.ok)throw Error(`HTTP ${r.status}`);
+      const payload=await r.json();
+      if(!Array.isArray(payload.data))throw Error('Unexpected API response');
+      if(!firstPayload){
+        firstPayload=payload;livePayload=payload;snapshotRunId=payload.snapshotRunId||null;
+      }else if(snapshotRunId&&payload.snapshotRunId!==snapshotRunId){
+        throw Error('Snapshot changed during pagination; refresh required');
+      }
+      payload.data.forEach(item=>{
+        const normalized=norm(item);
+        if(!seen.has(String(normalized.id)))seen.set(String(normalized.id),normalized);
+      });
+      hasMore=payload.hasMore===true;
+      cursor=payload.nextCursor||null;
+      if(hasMore&&!cursor)throw Error('API reported more records without a continuation cursor');
+      if(cursor&&seenCursors.has(cursor))throw Error('Repeated pagination cursor detected');
+      if(cursor)seenCursors.add(cursor);
+    }while(hasMore);
+    liveResults=[...seen.values()];
+    telemetry(firstPayload);
+    const total=firstPayload?.total??liveResults.length;
+    $('liveState').textContent=`LIVE LINK // ${liveResults.length} / ${total} SIGNALS LOADED`;
+    render();
+  }catch(e){
+    console.error(e);
+    liveResults=[...seen.values()];
+    if(firstPayload)telemetry(firstPayload);
+    $('liveState').textContent=liveResults.length
+      ?`LIVE LINK // PARTIAL ${liveResults.length} SIGNALS // ${e.message}`
+      :'LIVE LINK // DEGRADED';
+    render();
+  }
+}
 function details(id){const j=liveResults.find(x=>String(x.id)===String(id));if(!j)return;$('detailTitle').textContent=j.role;$('detailSub').textContent=`${j.company} // ${j.sourceName}`;$('detailBody').innerHTML=`<div class="detail-meta"><div><b>${esc(j.company)}</b><span>Employer</span></div><div><b>${esc(j.sourceName)}</b><span>Source</span></div><div><b>${esc(sourceType(j))}</b><span>Acquisition</span></div><div><b>${esc(j.stage)}</b><span>Pipeline Stage</span></div><div><b>${esc(j.status)}</b><span>Status</span></div><div><b>${esc(j.region.join(' / ')||'Unknown')}</b><span>Location</span></div></div><section class="card"><h2>Full Intelligence</h2><div class="detail-copy">${paragraphs(j.description)}</div></section><section class="card"><h2>Attribution</h2><div class="detail-copy">${paragraphs(typeof j.attribution==='string'?j.attribution:(j.attribution?.label||j.attribution?.url||'Not provided'))}</div></section><details class="card"><summary>Advanced Data</summary><pre class="json">${esc(JSON.stringify(j.raw,null,2))}</pre></details>`;$('detailModal').classList.add('active')}
 function scheduleAuthorGlitch(){const el=$('authorCredit');if(!el)return;const trigger=()=>{el.classList.remove('glitch');void el.offsetWidth;el.classList.add('glitch');setTimeout(()=>el.classList.remove('glitch'),420);setTimeout(trigger,12000+Math.random()*16000)};setTimeout(trigger,6500+Math.random()*9000)}
 $('refreshBtn').onclick=loadLive;$('telemetryBtn').onclick=()=>{$('telemetryPanel').hidden=!$('telemetryPanel').hidden};$('contactBtn').onclick=()=>$('contactModal').classList.add('active');document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).classList.remove('active'));$('clearSourceBtn').onclick=()=>{activeSourceId='';render()};document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('[data-mode]');if(!b)return;sourceMode=b.dataset.mode;activeSourceId='';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));render()};$('sourceList').onclick=e=>{const b=e.target.closest('[data-source]');if(!b)return;activeSourceId=b.dataset.source;render()};jobTableBody.onclick=e=>{const b=e.target.closest('[data-details]');if(b)details(b.dataset.details)};$('detailModal').onclick=e=>{if(e.target===$('detailModal'))$('detailModal').classList.remove('active')};$('contactModal').onclick=e=>{if(e.target===$('contactModal'))$('contactModal').classList.remove('active')};document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal.active').forEach(m=>m.classList.remove('active'))});[searchInput,statusFilter,typeFilter,regionFilter,sortFilter].forEach(el=>el.addEventListener(el===searchInput?'input':'change',render));Promise.all([loadSources(),loadLive()]).then(scheduleAuthorGlitch);
