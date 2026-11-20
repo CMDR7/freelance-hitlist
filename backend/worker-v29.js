@@ -74,6 +74,7 @@ async function acquireSources(origin) {
       return {
         spec, items, latencyMs: Date.now() - started, httpStatus: 200,
         status: sourceStatus === "healthy" ? (items.length ? "healthy" : "empty") : sourceStatus,
+        httpStatus: embedded?.httpStatus ?? null,
         error: embedded?.error || null,
       };
     } catch (error) {
