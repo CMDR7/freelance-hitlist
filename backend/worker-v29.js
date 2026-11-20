@@ -233,12 +233,12 @@ async function runAcquisition(env, triggerType = "scheduled", scheduledAt = null
       db.prepare(`UPDATE pipeline_runs SET completed_at=?, duration_ms=?, status=?,
         rss_sources_checked=?, rss_sources_healthy=?, api_sources_checked=?, api_sources_healthy=?,
         candidates_acquired=?, candidates_normalized=?, candidates_rejected=?,
-        unique_opportunities=?, duplicates_removed=?, returned_opportunities=?
+        unique_opportunities=?, duplicates_removed=?, stale_opportunities=?, unknown_freshness=?, returned_opportunities=?
         WHERE run_id=?`).bind(
           completedAt, durationMs, runStatus, metrics.rssFeedsChecked, metrics.rssFeedsSuccessful,
           metrics.apiConnectorsChecked, metrics.apiConnectorsSuccessful, normalized.inputCount,
           normalized.normalizedCount, normalized.rejectedCount, normalized.uniqueCount,
-          normalized.duplicatesRemoved, balanced.length, runId
+          normalized.duplicatesRemoved, normalized.staleCount, normalized.unknownFreshnessCount, balanced.length, runId
         ),
       db.prepare(`INSERT INTO latest_payload (singleton_id, run_id, generated_at, total_records, metadata_json)
         VALUES (1, ?, ?, ?, ?)
@@ -318,6 +318,8 @@ async function getOpportunities(url, env) {
     candidatesRejected: run.candidates_rejected,
     uniqueOpportunities: run.unique_opportunities,
     duplicatesRemoved: run.duplicates_removed,
+    staleOpportunities: run.stale_opportunities,
+    unknownFreshness: run.unknown_freshness,
     sourceBalanced: true,
     sourceHealth: (sourceRows.results || []).map((source) => ({
       sourceId: source.source_id, sourceType: source.source_type, name: source.source_name,
