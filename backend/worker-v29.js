@@ -283,7 +283,7 @@ async function getOpportunities(url, env) {
   }
 
   const snapshot = await db.prepare(`SELECT generated_at, total_records FROM latest_payload WHERE singleton_id=1 AND run_id=?`).bind(runId).first();
-  const run = await db.prepare("SELECT completed_at, status FROM pipeline_runs WHERE run_id=?").bind(runId).first();
+  const run = await db.prepare("SELECT * FROM pipeline_runs WHERE run_id=?").bind(runId).first();
   if (!run || !["success", "partial"].includes(run.status)) {
     return json({ error: "SNAPSHOT_EXPIRED", message: "This result snapshot is no longer available. Refresh the opportunity feed." }, 410);
   }
@@ -307,6 +307,24 @@ async function getOpportunities(url, env) {
   const page = fetched.slice(0, limit);
   const last = page[page.length - 1];
   const nextCursor = hasMore && last ? cursorEncode({ runId, ordinal: last.ordinal, query, region }) : null;
+  const sourceRows = await db.prepare("SELECT * FROM source_health WHERE run_id=? ORDER BY source_type, source_id").bind(runId).all();
+  const pipeline = {
+    rssFeedsChecked: run.rss_sources_checked,
+    rssFeedsSuccessful: run.rss_sources_healthy,
+    apiConnectorsChecked: run.api_sources_checked,
+    apiConnectorsSuccessful: run.api_sources_healthy,
+    candidatesAcquired: run.candidates_acquired,
+    candidatesNormalized: run.candidates_normalized,
+    candidatesRejected: run.candidates_rejected,
+    uniqueOpportunities: run.unique_opportunities,
+    duplicatesRemoved: run.duplicates_removed,
+    sourceBalanced: true,
+    sourceHealth: (sourceRows.results || []).map((source) => ({
+      sourceId: source.source_id, sourceType: source.source_type, name: source.source_name,
+      status: source.status, count: source.candidate_count, checkedAt: source.checked_at,
+      error: source.error, latencyMs: source.latency_ms, httpStatus: source.http_status,
+    })),
+  };
   const latestGeneratedAt = snapshot?.generated_at || run.completed_at;
   const total = snapshot?.total_records ?? await db.prepare("SELECT COUNT(*) AS count FROM pipeline_run_opportunities WHERE run_id=?").bind(runId).first().then((r) => r.count);
   return json({
@@ -324,6 +342,7 @@ async function getOpportunities(url, env) {
     query,
     region,
     persistence: "d1",
+    pipeline,
   });
 }
 async function diagnostics(env) {
