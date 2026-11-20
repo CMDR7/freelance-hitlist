@@ -78,6 +78,8 @@ CREATE TABLE IF NOT EXISTS pipeline_run_opportunities (
   source_id TEXT NOT NULL,
   source_type TEXT NOT NULL CHECK (source_type IN ('rss', 'api')),
   snapshot_record_json TEXT NOT NULL,
+  snapshot_search_text TEXT NOT NULL,
+  snapshot_region_text TEXT NOT NULL DEFAULT '',
   PRIMARY KEY (run_id, canonical_id),
   UNIQUE (run_id, ordinal)
 );
