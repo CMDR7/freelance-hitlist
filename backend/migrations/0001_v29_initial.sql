@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
   candidates_rejected INTEGER NOT NULL DEFAULT 0,
   unique_opportunities INTEGER NOT NULL DEFAULT 0,
   duplicates_removed INTEGER NOT NULL DEFAULT 0,
+  stale_opportunities INTEGER NOT NULL DEFAULT 0,
+  unknown_freshness INTEGER NOT NULL DEFAULT 0,
   returned_opportunities INTEGER NOT NULL DEFAULT 0,
   error_summary TEXT
 );
