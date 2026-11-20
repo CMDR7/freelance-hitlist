@@ -238,7 +238,7 @@ async function runAcquisition(env, triggerType = "scheduled", scheduledAt = null
           completedAt, durationMs, runStatus, metrics.rssFeedsChecked, metrics.rssFeedsSuccessful,
           metrics.apiConnectorsChecked, metrics.apiConnectorsSuccessful, normalized.inputCount,
           normalized.normalizedCount, normalized.rejectedCount, normalized.uniqueCount,
-          normalized.duplicatesRemoved, normalized.staleCount, normalized.unknownFreshnessCount, balanced.length, runId
+          normalized.duplicatesRemoved, metrics.staleOpportunities, metrics.unknownFreshnessCount, balanced.length, runId
         ),
       db.prepare(`INSERT INTO latest_payload (singleton_id, run_id, generated_at, total_records, metadata_json)
         VALUES (1, ?, ?, ?, ?)
