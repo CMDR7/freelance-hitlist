@@ -2,8 +2,6 @@
 -- Apply with Wrangler D1 migrations after reviewing the database binding.
 -- Storage schema only: this migration does not alter acquisition or deploy triggers.
 
-PRAGMA foreign_keys = ON;
-
 CREATE TABLE IF NOT EXISTS pipeline_runs (
   run_id TEXT PRIMARY KEY,
   trigger_type TEXT NOT NULL CHECK (trigger_type IN ('scheduled', 'manual')),
@@ -79,6 +77,7 @@ CREATE TABLE IF NOT EXISTS pipeline_run_opportunities (
   ordinal INTEGER NOT NULL CHECK (ordinal >= 0),
   source_id TEXT NOT NULL,
   source_type TEXT NOT NULL CHECK (source_type IN ('rss', 'api')),
+  snapshot_record_json TEXT NOT NULL,
   PRIMARY KEY (run_id, canonical_id),
   UNIQUE (run_id, ordinal)
 );
