@@ -4,7 +4,7 @@ import { normalizeAndDeduplicate } from "./normalize.js";
 const API_VERSION = "2.9.0";
 const FEEDS = [
   { id: "remote-first-jobs-ai", sourceId: "remote-first-jobs", type: "rss", name: "Remote First Jobs // AI", url: "https://remotefirstjobs.com/rss/jobs/ai.rss" },
-  { id: "jobicy-ai", sourceId: "jobicy", type: "rss", name: "Jobicy // AI Remote Jobs", url: "https://jobicy.com/jobs/feed?tag=ai" },
+  { id: "jobicy-ai", sourceId: "jobicy-ai-rss", type: "rss", name: "Jobicy // AI Remote Jobs", url: "https://jobicy.com/jobs/feed?tag=ai" },
   { id: "remoteyeah-engineering", sourceId: "remoteyeah", type: "rss", name: "RemoteYeah // Engineering", url: "https://remoteyeah.com/rss.xml" },
   { id: "weworkremotely-programming", sourceId: "we-work-remotely", type: "rss", name: "We Work Remotely // Programming", url: "https://weworkremotely.com/categories/remote-programming-jobs.rss" },
 ];
