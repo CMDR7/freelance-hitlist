@@ -150,7 +150,7 @@ async function handleRequest(request, env) {
   if (path === "/api/ingest/rss") {
     const feedId = (url.searchParams.get("feed") || "").trim(); if (feedId && !FEEDS.some((feed) => feed.id === feedId)) return json({ error: "UNKNOWN_FEED", feed: feedId }, 404);
     const ingestion = await ingestFeeds(feedId || null);
-    return json({ version: API_VERSION, stage: "ingested-candidate", checked: ingestion.checked, successful: ingestion.successful, itemCount: ingestion.items.length, results: ingestion.results.map((result) => ({ feedId: result.feed.id, name: result.feed.name, status: result.status, fetchedAt: result.fetchedAt, itemCount: result.itemCount, error: result.error || null })), data: ingestion.items });
+    return json({ version: API_VERSION, stage: "ingested-candidate", checked: ingestion.checked, successful: ingestion.successful, itemCount: ingestion.items.length, results: ingestion.results.map((result) => ({ feedId: result.feed.id, name: result.feed.name, status: result.status, httpStatus: result.httpStatus ?? null, fetchedAt: result.fetchedAt, itemCount: result.itemCount, error: result.error || null })), data: ingestion.items });
   }
   if (path === "/api/ingest/api") {
     const connector = (url.searchParams.get("connector") || "").trim().toLowerCase(); if (!connector) return json({ error: "CONNECTOR_REQUIRED", available: Object.keys(CONNECTORS) }, 400);
