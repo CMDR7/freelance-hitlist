@@ -70,12 +70,16 @@ async function acquireSources(origin) {
       const payload = await invokeLegacy(origin, spec.path);
       const items = Array.isArray(payload.data) ? payload.data : [];
       const embedded = spec.type === "rss" ? payload.results?.[0] : payload;
+      const sourceError = embedded?.error || null;
       const sourceStatus = embedded?.status || (items.length ? "healthy" : "empty");
+      const normalizedSourceStatus = sourceStatus === "degraded" && /timed out/i.test(sourceError || "")
+        ? "timeout"
+        : sourceStatus;
       return {
-        spec, items, latencyMs: Date.now() - started, httpStatus: 200,
-        status: sourceStatus === "healthy" ? (items.length ? "healthy" : "empty") : sourceStatus,
+        spec, items, latencyMs: Date.now() - started,
+        status: normalizedSourceStatus === "healthy" ? (items.length ? "healthy" : "empty") : normalizedSourceStatus,
         httpStatus: embedded?.httpStatus ?? null,
-        error: embedded?.error || null,
+        error: sourceError,
       };
     } catch (error) {
       return {
