@@ -385,7 +385,17 @@ async function handle(request, env, ctx) {
     const latest = await env.DB.prepare("SELECT run_id FROM pipeline_runs ORDER BY started_at DESC LIMIT 1").first();
     if (!latest) return json({ version: API_VERSION, data: [], count: 0, status: "awaiting-first-run" });
     const rows = await env.DB.prepare("SELECT * FROM source_health WHERE run_id=? ORDER BY source_type, source_id").bind(latest.run_id).all();
-    return json({ version: API_VERSION, data: rows.results || [], count: rows.results?.length || 0, status: "persisted" });
+    return json({
+      version: API_VERSION,
+      data: (rows.results || []).map((source) => ({
+        sourceId: source.source_id, sourceType: source.source_type, id: source.source_id,
+        name: source.source_name, url: source.endpoint, status: source.status,
+        count: source.candidate_count, checkedAt: source.checked_at,
+        error: source.error, latencyMs: source.latency_ms, httpStatus: source.http_status,
+      })),
+      count: rows.results?.length || 0,
+      status: "persisted",
+    });
   }
   return legacyWorker.fetch(request, env, ctx);
 }
