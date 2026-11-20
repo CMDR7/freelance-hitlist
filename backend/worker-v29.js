@@ -106,7 +106,7 @@ async function acquireSources(origin) {
 }
 function recordSearchText(item) {
   return [
-    item.title, item.employer, item.description, item.sourceName,
+    item.title, item.employer, item.description, item.sourceName, item.sourceId,
     ...(item.tags || []), ...(item.location || []), ...(item.engagement || []),
   ].filter(Boolean).join(" ").toLowerCase();
 }
