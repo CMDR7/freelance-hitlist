@@ -90,7 +90,9 @@ async function acquireSources(origin) {
   }));
   const candidates = settled.flatMap(({ spec, items }) => items.map((item) => ({
     ...item,
-    sourceId: item.sourceId || spec.sourceId,
+    // The configured source ID is authoritative. The legacy Jobicy RSS adapter
+    // historically emitted "jobicy", which collides with the separate Jobicy API.
+    sourceId: spec.sourceId,
     sourceName: item.sourceName || spec.name,
     acquisition: item.acquisition || spec.type,
   })));
@@ -372,6 +374,23 @@ async function handle(request, env, ctx) {
   const path = url.pathname.replace(/\/+$/, "") || "/";
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: HEADERS });
   if (request.method !== "GET") return json({ error: "METHOD_NOT_ALLOWED" }, 405);
+
+  if (path === "/api/feeds") {
+    const payload = await invokeLegacy(url.origin, path);
+    const sourceIds = new Map(FEEDS.map((feed) => [feed.id, feed.sourceId]));
+    return json({
+      ...payload,
+      version: API_VERSION,
+      data: (payload.data || []).map((feed) => ({
+        ...feed,
+        sourceId: sourceIds.get(feed.id) || feed.sourceId,
+      })),
+    });
+  }
+  if (path === "/api/connectors") {
+    const payload = await invokeLegacy(url.origin, path);
+    return json({ ...payload, version: API_VERSION });
+  }
 
   if (path === "/api/health") return json({
     status: env.DB ? "healthy" : "degraded",
