@@ -1,16 +1,19 @@
 name = "fl-hl-intelligence-api"
-main = "worker-v28.js"
+main = "worker-v29.js"
 compatibility_date = "2026-08-17"
 
-# V2.8 keeps persistence disabled while source-balanced live acquisition is validated.
-# V2.9 D1 configuration must be added only after the intended database is explicitly provisioned
-# and the Worker entry point is deliberately switched during a reviewed deployment.
-#
-# Example future binding:
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "fl-hl"
-# database_id = "<created-in-cloudflare>"
+# V2.9 integration candidate.
+# The D1 schema has been applied to the provisioned fl-hl database.
+# remote = true lets local Wrangler development test against that real D1 instance.
+# Do not deploy this Worker or enable production Cron until the first acquisition
+# and pagination checks have passed.
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fl-hl"
+database_id = "fe82d604-a95e-4741-8f79-05f14ae84689"
+migrations_dir = "migrations"
+remote = true
 
 [vars]
-API_VERSION = "2.8.0"
+API_VERSION = "2.9.0"
