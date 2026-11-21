@@ -2,14 +2,11 @@ name = "fl-hl-intelligence-api"
 main = "worker-v28.js"
 compatibility_date = "2026-08-17"
 
-# V2.8 keeps persistence disabled while source-balanced live acquisition is validated.
-# D1 will be introduced at the appropriate persistence stage.
-#
-# Example future binding:
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "fl-hl"
-# database_id = "<created-in-cloudflare>"
+[[d1_databases]]
+binding = "DB"
+database_name = "fl-hl"
+database_id = "fe82d604-a95e-4741-8f79-05f14ae84689"
+migrations_dir = "migrations"
 
 [vars]
 API_VERSION = "2.8.0"

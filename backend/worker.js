@@ -57,14 +57,16 @@ function parseFeed(xml, feed) {
 }
 
 async function fetchFeed(feed) {
+  let httpStatus = null;
   const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 10000);
   try {
     const response = await fetch(feed.url, { headers: { "User-Agent": "FL-HL-Intelligence-Network/2.8 (+public-feed-ingestion)", Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.1" }, signal: controller.signal, redirect: "follow" });
+    httpStatus = response.status;
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const xml = await response.text(); if (!/<(?:rss|feed|rdf:RDF)\b/i.test(xml)) throw new Error("Response does not appear to be an RSS/Atom/XML feed");
     const items = parseFeed(xml, feed);
-    return { feed, status: "healthy", fetchedAt: new Date().toISOString(), itemCount: items.length, items };
-  } catch (error) { return { feed, status: "degraded", fetchedAt: new Date().toISOString(), itemCount: 0, items: [], error: error?.name === "AbortError" ? "Feed request timed out" : String(error?.message || error) }; }
+    return { feed, status: "healthy", httpStatus, fetchedAt: new Date().toISOString(), itemCount: items.length, items };
+  } catch (error) { return { feed, status: "degraded", httpStatus, fetchedAt: new Date().toISOString(), itemCount: 0, items: [], error: error?.name === "AbortError" ? "Feed request timed out" : String(error?.message || error) }; }
   finally { clearTimeout(timeout); }
 }
 async function ingestFeeds(selectedFeedId = null) { const selected = selectedFeedId ? FEEDS.filter((feed) => feed.id === selectedFeedId && feed.enabled) : FEEDS.filter((feed) => feed.enabled); const results = await Promise.all(selected.map(fetchFeed)); return { results, items: results.flatMap((result) => result.items), checked: results.length, successful: results.filter((result) => result.status === "healthy").length }; }
@@ -80,19 +82,21 @@ function normalizeArbeitnow(job, retrievedAt) {
 async function fetchConnector(name) {
   const connector = CONNECTORS[name]; if (!connector) throw new Error(`Unknown connector: ${name}`);
   const retrievedAt = new Date().toISOString();
+  let httpStatus = null;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
   try {
     const response = await fetch(connector.url, { headers: { Accept: "application/json", "User-Agent": "FL-HL-Intelligence-Network/2.8 (+public-api-ingestion)" }, signal: controller.signal, redirect: "follow" });
+    httpStatus = response.status;
     if (!response.ok) throw new Error(`${name} returned HTTP ${response.status}`);
     const payload = await response.json();
     const jobs = Array.isArray(payload.jobs) ? payload.jobs : Array.isArray(payload.data) ? payload.data : [];
     const data = name === "jobicy"
       ? jobs.map((job) => normalizeJobicy(job, retrievedAt)).filter((job) => job.url)
       : jobs.map((job) => normalizeArbeitnow(job, retrievedAt)).filter((job) => job.url);
-    return { connector: connector.id, source: name, name: connector.name, url: connector.url, type: connector.type, retrievedAt, status: data.length ? "healthy" : "empty", count: data.length, stage: "ingested-candidate", data, error: null, metadata: name === "jobicy" ? { nextCursor: payload.nextCursor ?? null, hasMore: payload.hasMore ?? false, apiVersion: payload.apiVersion ?? null } : null };
+    return { connector: connector.id, source: name, name: connector.name, url: connector.url, type: connector.type, retrievedAt, httpStatus, status: data.length ? "healthy" : "empty", count: data.length, stage: "ingested-candidate", data, error: null, metadata: name === "jobicy" ? { nextCursor: payload.nextCursor ?? null, hasMore: payload.hasMore ?? false, apiVersion: payload.apiVersion ?? null } : null };
   } catch (error) {
-    return { connector: connector.id, source: name, name: connector.name, url: connector.url, type: connector.type, retrievedAt, status: error?.name === "AbortError" ? "timeout" : "degraded", count: 0, stage: "ingested-candidate", data: [], error: error?.name === "AbortError" ? "Request timed out" : String(error?.message || error), metadata: null };
+    return { connector: connector.id, source: name, name: connector.name, url: connector.url, type: connector.type, retrievedAt, httpStatus, status: error?.name === "AbortError" ? "timeout" : "degraded", count: 0, stage: "ingested-candidate", data: [], error: error?.name === "AbortError" ? "Request timed out" : String(error?.message || error), metadata: null };
   } finally { clearTimeout(timeout); }
 }
 
@@ -146,7 +150,7 @@ async function handleRequest(request, env) {
   if (path === "/api/ingest/rss") {
     const feedId = (url.searchParams.get("feed") || "").trim(); if (feedId && !FEEDS.some((feed) => feed.id === feedId)) return json({ error: "UNKNOWN_FEED", feed: feedId }, 404);
     const ingestion = await ingestFeeds(feedId || null);
-    return json({ version: API_VERSION, stage: "ingested-candidate", checked: ingestion.checked, successful: ingestion.successful, itemCount: ingestion.items.length, results: ingestion.results.map((result) => ({ feedId: result.feed.id, name: result.feed.name, status: result.status, fetchedAt: result.fetchedAt, itemCount: result.itemCount, error: result.error || null })), data: ingestion.items });
+    return json({ version: API_VERSION, stage: "ingested-candidate", checked: ingestion.checked, successful: ingestion.successful, itemCount: ingestion.items.length, results: ingestion.results.map((result) => ({ feedId: result.feed.id, name: result.feed.name, status: result.status, httpStatus: result.httpStatus ?? null, fetchedAt: result.fetchedAt, itemCount: result.itemCount, error: result.error || null })), data: ingestion.items });
   }
   if (path === "/api/ingest/api") {
     const connector = (url.searchParams.get("connector") || "").trim().toLowerCase(); if (!connector) return json({ error: "CONNECTOR_REQUIRED", available: Object.keys(CONNECTORS) }, 400);
