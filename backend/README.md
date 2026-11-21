@@ -1,171 +1,113 @@
 # FL-HL // Intelligence API
 
-V2.7 activates the normalization and deduplication layer for the Freelancer // Intelligence Network.
+Current backend baseline: V2.9 integration candidate. The V2.8 Worker remains the last production deployment until the V2.9 first-run and pagination gates pass.
 
-## Pipeline
-
-```text
-FL-HL CLIENT
-     |
-     v
-INTELLIGENCE API
-     |
-     +--> D1 / cache                         <-- future
-     +--> RSS / Atom feeds                   <-- V2.5
-     +--> publication feeds                  <-- future
-     +--> approved free APIs                 <-- V2.6
-     |
-     v
-NORMALIZE
-     |
-     v
-CANONICAL ID
-     |
-     v
-DEDUPLICATE
-     |
-     v
-NORMALIZED OPPORTUNITY
-```
-
-## V2.7 normalization
-
-`backend/normalize.js` is the canonical transformation layer between external candidates and the FL-HL opportunity contract.
-
-It currently handles:
-
-- URL validation and canonicalization
-- removal of common tracking parameters
-- Unicode/text normalization
-- employer normalization
-- engagement/location/tag normalization
-- publication/retrieval timestamp normalization
-- freshness classification
-- canonical opportunity IDs using SHA-256
-- provenance tracking across feeds and acquisition types
-- source attribution preservation
-- duplicate merging
-- duplicate counting
-- malformed-record rejection
-
-Cloudflare Workers provides Web Crypto through `crypto.subtle`, including SHA-256 digest support, so the canonical IDs do not require a Node.js crypto dependency.
-
-## Deduplication policy
-
-FL-HL uses a conservative two-stage identity strategy:
-
-1. **Canonical URL match** is the primary duplicate key.
-2. **Employer + title + location** is the secondary semantic key when the employer is known.
-
-This prevents obvious cross-feed duplicates without aggressively collapsing unrelated jobs that merely have similar titles.
-
-When duplicates are merged, the resulting record retains:
-
-- one canonical opportunity ID
-- merged tags/location/engagement data
-- merged provenance
-- source attribution
-- the best available description
-- the latest available retrieval/update metadata
-- `duplicateCount`
-
-## Freshness
-
-Freshness is informational and does not automatically close a job.
-
-- `fresh` = published within 45 days
-- `stale` = published more than 45 days ago
-- `unknown` = no usable publication timestamp
-
-A stale listing remains visible until a later lifecycle stage establishes a reliable closed/stale policy.
-
-## V2.7 live route
+## Canonical pipeline
 
 ```text
-GET /api/opportunities?live=true
+RSS / ATOM / PUBLIC APIs
+          |
+          v
+SERVER-SIDE ACQUISITION
+          |
+          v
+CANONICAL NORMALIZATION
+          |
+          v
+CANONICAL IDs + DEDUPLICATION
+          |
+          v
+SOURCE BALANCING
+          |
+          v
+D1 OPPORTUNITY + SNAPSHOT PERSISTENCE
+          |
+          v
+CURSOR-PAGINATED INTELLIGENCE API
+          |
+          v
+FRONTEND DASHBOARD
 ```
 
-This route acquires the current RSS and API candidates, normalizes them, deduplicates them in memory, and returns the resulting normalized opportunity collection.
+The six configured sources remain fixed: four RSS feeds and two public API connectors. Source expansion requires separate approval.
 
-Optional query parameters:
+## Normalization and identity
 
-```text
-?live=true&limit=50
-?live=true&q=AI trainer
-?live=true&region=Germany
-```
+`normalize.js` is the canonical transformation layer. It handles URL validation and canonicalization, tracking-parameter removal, Unicode/text normalization, employer and metadata normalization, timestamp normalization, freshness classification, SHA-256-derived canonical IDs, provenance, attribution, duplicate merging, duplicate counts, and malformed-record rejection.
 
-The response also includes pipeline metrics:
+Deduplication uses canonical URL first and employer + title + location as the secondary semantic key when the employer is known.
 
-- candidates acquired
-- candidates normalized
-- candidates rejected
-- unique opportunities
-- duplicates removed
-- stale opportunities
-- unknown-freshness opportunities
+Freshness is informational:
+- `fresh`: published within 45 days
+- `stale`: published more than 45 days ago
+- `unknown`: no usable publication timestamp
 
-## Persistence boundary
+A stale listing is not automatically treated as closed.
 
-V2.7 is intentionally **in-memory only**.
+## V2.9 persistence
 
-```text
-RSS / API
-   |
-   v
-INGESTED CANDIDATES
-   |
-   v
-NORMALIZATION
-   |
-   v
-DEDUPLICATION
-   |
-   v
-NORMALIZED RESULTS
-   |
-   X  D1 persistence (later)
-```
+The initial D1 migration is `migrations/0001_v29_initial.sql`. The provisioned database is named `fl-hl`; the Worker binding is `DB`.
 
-This lets us validate data quality before introducing storage and scheduled synchronization.
+The schema stores:
+- `pipeline_runs`: acquisition run state and pipeline counters.
+- `source_health`: one source-level telemetry record per configured source and run.
+- `opportunities`: current canonical records.
+- `pipeline_run_opportunities`: immutable, ordered snapshot membership and frozen records for pagination.
+- `latest_payload`: pointer and metadata for the latest completed snapshot.
+- `pipeline_state`: operational key/value state.
 
-## Attribution
+The D1 migration has been applied. The first acquisition run has not yet been verified.
 
-Attribution is a first-class contract field. Required provider attribution is preserved through normalization so the V2.8 presentation layer can render the correct source credit.
+## API routes
 
-Remote First Jobs and We Work Remotely explicitly request source attribution. Jobicy's current API terms also require preserving the canonical Jobicy URL and source attribution.
-
-## Routes
-
+Read-only routes:
 - `GET /api`
 - `GET /api/health`
 - `GET /api/feeds`
 - `GET /api/connectors`
-- `GET /api/ingest/rss`
-- `GET /api/ingest/rss?feed=<feed-id>`
-- `GET /api/ingest/api?connector=jobicy`
-- `GET /api/ingest/api?connector=arbeitnow`
-- `GET /api/opportunities`
-- `GET /api/opportunities?live=true`
 - `GET /api/sources`
 - `GET /api/sync/status`
+- `GET /api/diagnostics`
+- `GET /api/opportunities?live=true&limit=100`
 
-## Security
+The opportunities route reads the latest completed D1 snapshot. It supports `q`, `region`, and an opaque `cursor`; page size is capped at 100. The response includes `hasMore`, `nextCursor`, `snapshotRunId`, `total`, `filteredTotal`, and pipeline telemetry.
 
-- No API keys belong in `index.html`.
-- No secrets are committed to Git.
-- Browser requests use the normalized API boundary.
-- API ingestion runs server-side.
-- Unknown sources remain discovery records until human approval.
-- V2.7 ingestion remains on-demand; scheduled synchronization is intentionally deferred.
+The legacy ingestion adapters remain internal to the V2.9 Worker. There is no public administrative mutation route.
 
-## Deployment
+## Local integration test
 
-The Worker can be deployed separately from GitHub Pages using Wrangler:
+From the `backend/` directory, the Wrangler configuration binds `DB` to the provisioned D1 database using a remote binding for local testing.
+
+Start the local Worker with scheduled-event testing enabled:
+
+```bash
+npx wrangler dev --test-scheduled
+```
+
+Then, from a second terminal session, invoke one controlled acquisition:
+
+```bash
+curl -i "http://127.0.0.1:8787/cdn-cgi/local/scheduled?cron=*+*+*+*+*"
+```
+
+This runs the local Worker code's `scheduled()` handler and writes its acquisition run to the configured remote D1 database. It does not deploy the Worker or enable a production Cron Trigger. Check the Wrangler terminal output, then query the `pipeline_runs`, `source_health`, `opportunities`, `pipeline_run_opportunities`, and `latest_payload` tables.
+
+While the local server is running, validate:
+- `GET http://127.0.0.1:8787/api/health`
+- `GET http://127.0.0.1:8787/api/diagnostics`
+- `GET http://127.0.0.1:8787/api/opportunities?live=true&limit=100`
+
+For pagination, continue with the returned `nextCursor` and verify that all pages retain the same `snapshotRunId` and contain no duplicate canonical IDs.
+
+## Deployment boundary
+
+The Worker deploys separately from GitHub Pages:
 
 ```bash
 cd backend
-wrangler deploy
+npx wrangler deploy
 ```
 
-Cloudflare authentication, Worker deployment, and D1 creation remain infrastructure/account operations and are not automated from this repository.
+Do not run the deployment command yet. First verify the controlled acquisition, read API behaviour, source health, and pagination. The production Cron Trigger (target cadence: every 12 hours UTC) is intentionally not configured until those checks pass.
+
+Cloudflare credentials remain local to Wrangler and must never be committed to Git.
